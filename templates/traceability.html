@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}Harvest Verification & Traceability — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div class="badge badge-success" style="margin-bottom: 0.5rem;">FARM-TO-TABLE AUDIT TRAIL</div>
+      <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Harvest Verification & Traceability</h1>
+      <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.98rem;">
+        Track the full agricultural journey: Farm &rarr; Harvest &rarr; Verification &rarr; Quality Check &rarr; Packaging &rarr; Delivery. Verify pesticide residue checks, harvest timestamps, and grower origins.
+      </p>
+    </div>
+    {% if session.get('role') in ['FARMER', 'ADMIN'] %}
+      <button onclick="openModal('addBatchModal')" class="btn btn-primary">+ Register Harvest Batch</button>
+    {% endif %}
+  </div>
+
+
+  <!-- Found Batch Details Card -->
+  {% if found_batch %}
+    <div class="card" style="margin-bottom: 3rem; border: 2px solid var(--primary-green);">
+      <div class="card-header" style="flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <span class="badge {% if found_batch.verification_status == 'Verified' %}badge-success{% else %}badge-info{% endif %}" style="margin-bottom: 0.25rem;">
+            {{ found_batch.verification_status }}
+          </span>
+          <h2 style="font-size: 1.6rem; color: var(--dark-green);">Batch #{{ found_batch.batch_code }}</h2>
+          <small style="color: var(--text-muted);">Crop: <strong>{{ found_batch.crop_name }}</strong></small>
+        </div>
+
+        <div style="text-align: right;">
+          <div style="font-size: 0.8rem; color: var(--text-muted);">Audited Quality Score</div>
+          <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary-green); font-family: 'Outfit';">
+            {{ found_batch.quality_score }}/100
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Journey Stepper -->
+      <div style="margin: 2rem 0;">
+        <h4 style="font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1rem;">
+          Verified Lifecycle Progression
+        </h4>
+        <div class="journey-stepper">
+          <div class="step-node completed">
+            <div class="step-icon">1</div>
+            <div class="step-label">Farm Origin</div>
+          </div>
+          <div class="step-node completed">
+            <div class="step-icon">2</div>
+            <div class="step-label">Harvested</div>
+          </div>
+          <div class="step-node {% if found_batch.journey_stage in ['Verification', 'Quality Check', 'Packaging', 'In Transit', 'Delivered'] %}completed{% else %}active{% endif %}">
+            <div class="step-icon">3</div>
+            <div class="step-label">Verification</div>
+          </div>
+          <div class="step-node {% if found_batch.journey_stage in ['Quality Check', 'Packaging', 'In Transit', 'Delivered'] %}completed{% elif found_batch.journey_stage == 'Verification' %}active{% endif %}">
+            <div class="step-icon">4</div>
+            <div class="step-label">Quality Check</div>
+          </div>
+          <div class="step-node {% if found_batch.journey_stage in ['Packaging', 'In Transit', 'Delivered'] %}completed{% elif found_batch.journey_stage == 'Quality Check' %}active{% endif %}">
+            <div class="step-icon">5</div>
+            <div class="step-label">Packaging</div>
+          </div>
+          <div class="step-node {% if found_batch.journey_stage == 'Delivered' %}completed{% elif found_batch.journey_stage == 'In Transit' %}active{% endif %}">
+            <div class="step-icon">6</div>
+            <div class="step-label">In Transit / Delivered</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch Specifications Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; background: #F8FAF8; padding: 1.25rem; border-radius: var(--radius-md); font-size: 0.88rem; line-height: 1.6; margin-bottom: 1.25rem;">
+        <div>
+          <span style="color: var(--text-muted); display: block;">Grower / Farm</span>
+          <strong>{{ found_batch.farmer.full_name }}</strong><br>
+          <small>{{ found_batch.farm.name if found_batch.farm else 'Origin Farm' }}</small>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block;">Harvest Date</span>
+          <strong>{{ found_batch.harvest_date.strftime('%d %b %Y') }}</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block;">Quantity & Grade</span>
+          <strong>{{ found_batch.quantity }} {{ found_batch.unit }}</strong> ({{ found_batch.quality_grade }})
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block;">Storage Protocol</span>
+          <strong>{{ found_batch.storage_conditions or 'Standard Controlled Shed' }}</strong>
+        </div>
+        <div>
+          <span style="color: var(--text-muted); display: block;">Audit / Inspector</span>
+          <strong>{{ found_batch.verifier_name or 'Platform Registered Grower Audit' }}</strong>
+        </div>
+      </div>
+
+      {% if found_batch.notes %}
+        <div style="font-size: 0.88rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          <strong>Batch Notes:</strong> {{ found_batch.notes }}
+        </div>
+      {% endif %}
+
+      <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-color); padding-top: 1rem; font-size: 0.85rem;">
+        <span style="color: var(--text-muted);">
+          Independently Verified: <strong>{% if found_batch.is_independently_verified %}Yes (Third-Party Audited){% else %}Registered Grower Self-Attestation{% endif %}</strong>
+        </span>
+        <a href="{{ url_for('traceability.batch_detail', batch_code=found_batch.batch_code) }}" class="btn btn-sm btn-outline">
+          Public Certificate View
+        </a>
+      </div>
+
+    </div>
+  {% endif %}
+
+  <!-- Farmer's Registered Batches List -->
+  {% if farmer_batches %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+      <h2 style="font-size: 1.5rem; margin: 0; color: var(--dark-green);">
+        📑 Your Registered Harvest Batches
+      </h2>
+      <a href="{{ url_for('dashboard.my_verifications') }}" class="btn btn-sm btn-outline">
+        🛡️ View My Product Verification Dashboard &rarr;
+      </a>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+      {% for b in farmer_batches %}
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">{{ b.crop_name }}</h3>
+              <small style="color: var(--text-muted); font-family: monospace;">#{{ b.batch_code }}</small>
+            </div>
+            <span class="badge {% if b.verification_stage == 'Quality Verified' %}badge-success{% elif b.verification_stage == 'Rejected' %}badge-danger{% elif b.verification_stage == 'Action Required' %}badge-warning{% else %}badge-info{% endif %}">
+              {{ b.verification_stage }}
+            </span>
+          </div>
+
+          <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem;">
+            <div>📅 Harvested: {{ b.harvest_date.strftime('%d %b %Y') }}</div>
+            <div>⚖️ Batch Size: {{ b.quantity }} {{ b.unit }}</div>
+            <div>🚚 Current Stage: <strong>{{ b.journey_stage }}</strong></div>
+            <div style="margin-top: 0.25rem;">
+              <a href="{{ url_for('dashboard.my_verifications') }}" style="color: var(--primary-green); font-size: 0.8rem; font-weight: 600;">
+                Track Verification Progress &rarr;
+              </a>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ url_for('traceability.update_batch_stage', id=b.id) }}" style="display: flex; gap: 0.5rem; align-items: center; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+            <select name="journey_stage" class="form-select" style="font-size: 0.82rem; padding: 0.35rem 0.65rem;">
+              <option value="Harvested" {% if b.journey_stage == 'Harvested' %}selected{% endif %}>Harvested</option>
+              <option value="Quality Check" {% if b.journey_stage == 'Quality Check' %}selected{% endif %}>Quality Check</option>
+              <option value="Packaging" {% if b.journey_stage == 'Packaging' %}selected{% endif %}>Packaging</option>
+              <option value="In Transit" {% if b.journey_stage == 'In Transit' %}selected{% endif %}>In Transit</option>
+              <option value="Delivered" {% if b.journey_stage == 'Delivered' %}selected{% endif %}>Delivered</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">Advance</button>
+          </form>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- Modal: Register Harvest Batch -->
+<div class="modal-overlay" id="addBatchModal">
+  <div class="modal-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.25rem;">Register Harvest Batch</h3>
+      <button onclick="closeModal('addBatchModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('traceability.create_batch') }}" enctype="multipart/form-data">
+      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="batchCrop">Crop Variety *</label>
+          <input type="text" id="batchCrop" name="crop_name" class="form-control" placeholder="e.g. Tomato (Roma Hybrid)" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="batchCategory">Category *</label>
+          <select id="batchCategory" name="category" class="form-select">
+            <option value="Vegetables">Vegetables</option>
+            <option value="Grains">Grains</option>
+            <option value="Fruits">Fruits</option>
+            <option value="Pulses">Pulses</option>
+            <option value="Spices">Spices</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="batchFarm">Origin Farm</label>
+          <select id="batchFarm" name="farm_id" class="form-select">
+            <option value="">-- Select Farm (Optional) --</option>
+            {% for f in farms %}
+              <option value="{{ f.id }}">{{ f.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="batchHarvestDate">Harvest Date *</label>
+          <input type="date" id="batchHarvestDate" name="harvest_date" class="form-control" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.85rem;">
+        <div class="form-group">
+          <label class="form-label" for="batchQty">Lot Quantity *</label>
+          <input type="number" step="0.1" id="batchQty" name="quantity" class="form-control" placeholder="1500" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="batchUnit">Unit</label>
+          <select id="batchUnit" name="unit" class="form-select">
+            <option value="kg">kg</option>
+            <option value="quintal">quintal</option>
+            <option value="crate">crate</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="batchPrice">Asking Price (₹)</label>
+          <input type="number" step="0.5" id="batchPrice" name="asking_price" class="form-control" placeholder="22.0">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="batchLocation">Farm / Location Details *</label>
+          <input type="text" id="batchLocation" name="location" class="form-control" placeholder="e.g. Nashik, Maharashtra">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="batchGrade">Quality Grade</label>
+          <select id="batchGrade" name="quality_grade" class="form-select">
+            <option value="Grade A">Grade A</option>
+            <option value="Grade B">Grade B</option>
+            <option value="Certified Organic">Certified Organic</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="batchImg">Product Photo (Optional)</label>
+          <input type="file" id="batchImg" name="product_image" class="form-control" accept=".png,.jpg,.jpeg,.webp">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="batchDoc">Quality Certificate / Doc (Optional)</label>
+          <input type="file" id="batchDoc" name="supporting_document" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="batchStorage">Storage Conditions</label>
+        <input type="text" id="batchStorage" name="storage_conditions" class="form-control" placeholder="Cold storage (12°C, 85% RH) or Ventilated shaded shed">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="batchNotes">Traceability & Safety Notes</label>
+        <textarea id="batchNotes" name="notes" class="form-control" rows="2" placeholder="Pesticide spray interval observed, organic biostimulant details..."></textarea>
+      </div>
+
+      <div style="background: #FAFDF9; border: 1px solid #D1E7DD; border-radius: var(--radius-sm); padding: 0.75rem 0.9rem; font-size: 0.82rem; color: #166534; margin-bottom: 1rem;">
+        🛡️ Unique Harvest Verification Code (UHVC) will be generated automatically on the backend upon submission.
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" onclick="closeModal('addBatchModal')" class="btn btn-outline">Cancel</button>
+        <button type="submit" class="btn btn-primary">Generate UHVC Batch ID</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

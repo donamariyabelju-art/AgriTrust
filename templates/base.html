@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AgriTrust — Smart Agriculture Decision Support & Direct Marketplace{% endblock %}</title>
+  <meta name="description" content="AgriTrust empowers farmers to make informed farming decisions, identify crop health issues, understand market demand, and sell directly to buyers.">
+  
+  <!-- Design System CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+  
+  <!-- Chart.js for data visualization -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="{{ url_for('index') }}" class="brand-logo" id="brandLogo">
+        <span class="logo-icon">🌱</span>
+        <span>AgriTrust</span>
+      </a>
+
+      <nav>
+        <ul class="nav-menu">
+          {% if session.get('role') == 'ADMIN' %}
+            <li class="nav-item"><a href="{{ url_for('admin.admin_view') }}">Admin Dashboard</a></li>
+            <li class="nav-item"><a href="{{ url_for('general.demand_view') }}">Demand Board</a></li>
+            <li class="nav-item"><a href="{{ url_for('admin.admin_view') }}#product-quality-verification">Quality Verification</a></li>
+            <li class="nav-item"><a href="{{ url_for('admin.admin_view') }}#harvest-lifecycle-management">Lifecycle Management</a></li>
+            <li class="nav-item"><a href="{{ url_for('admin.admin_view') }}#user-account-management">Account Management</a></li>
+          {% elif session.get('role') == 'BUYER' %}
+            <li class="nav-item"><a href="{{ url_for('dashboard.buyer_dashboard') }}">Buyer Dashboard</a></li>
+            <li class="nav-item"><a href="{{ url_for('marketplace.marketplace_view') }}">Marketplace</a></li>
+            <li class="nav-item"><a href="{{ url_for('reservations.reservations_view') }}">Upcoming Harvests</a></li>
+            <li class="nav-item"><a href="{{ url_for('orders.orders_view') }}">My Orders</a></li>
+            <li class="nav-item"><a href="{{ url_for('general.demand_view') }}">Demand Board</a></li>
+          {% elif session.get('role') == 'FARMER' %}
+            <li class="nav-item"><a href="{{ url_for('dashboard.dashboard_view') }}">Dashboard</a></li>
+            <li class="nav-item"><a href="{{ url_for('marketplace.marketplace_view') }}">Marketplace</a></li>
+            <li class="nav-item"><a href="{{ url_for('recommendations.recommendations_view') }}">What to Grow</a></li>
+            <li class="nav-item"><a href="{{ url_for('disease.crop_health_view') }}">Crop Health</a></li>
+            <li class="nav-item"><a href="{{ url_for('dashboard.my_verifications') }}">My Verifications</a></li>
+            <li class="nav-item"><a href="{{ url_for('general.demand_view') }}">Demand Board</a></li>
+            <li class="nav-item"><a href="{{ url_for('weather.weather_view') }}">Weather</a></li>
+            <li class="nav-item"><a href="{{ url_for('traceability.traceability_view') }}">Traceability</a></li>
+          {% else %}
+            <li class="nav-item"><a href="{{ url_for('marketplace.marketplace_view') }}">Marketplace</a></li>
+            <li class="nav-item"><a href="{{ url_for('traceability.traceability_view') }}">Traceability</a></li>
+            <li class="nav-item"><a href="{{ url_for('general.demand_view') }}">Demand Board</a></li>
+            <li class="nav-item"><a href="{{ url_for('general.farming_guide_view') }}">Guides</a></li>
+          {% endif %}
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        {% if session.get('user_id') %}
+          {% if session.get('role') == 'FARMER' %}
+            <a href="{{ url_for('dashboard.dashboard_view') }}" class="btn btn-sm btn-primary">Farm Dashboard</a>
+          {% elif session.get('role') == 'BUYER' %}
+            <a href="{{ url_for('dashboard.buyer_dashboard') }}" class="btn btn-sm btn-primary">Buyer Dashboard</a>
+          {% elif session.get('role') == 'ADMIN' %}
+            <a href="{{ url_for('admin.admin_view') }}" class="btn btn-sm btn-primary">Admin Panel</a>
+          {% endif %}
+          
+          <div class="user-pill">
+            <span>{{ session.get('username') }}</span>
+            <span class="role-tag">{{ session.get('role') }}</span>
+          </div>
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-outline" title="Log Out">Logout</a>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline">Log In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-primary">Register Free</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Messaging -->
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" style="background:none;border:none;cursor:pointer;font-weight:700;">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="main-wrapper">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <div class="brand-logo" style="color: white; margin-bottom: 0.75rem;">
+          <span class="logo-icon">🌱</span>
+          <span>AgriTrust</span>
+        </div>
+        <p style="font-size: 0.9rem; line-height: 1.6; color: #D1E7DD;">
+          "Grow Smarter. Sell Fairer. Build Trust."<br>
+          Empowering agricultural producers with AI agronomy decision intelligence, fair price transparency, and direct farmer-to-buyer market access.
+        </p>
+      </div>
+
+      <div class="footer-col">
+        <h4>Agronomy Tools</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('recommendations.recommendations_view') }}">Crop Recommendation</a></li>
+          <li><a href="{{ url_for('disease.crop_health_view') }}">Crop Health Scanner</a></li>
+          <li><a href="{{ url_for('general.farming_guide_view') }}">Smart Farming Guide</a></li>
+          <li><a href="{{ url_for('chatbot.chatbot_view') }}">AgriTrust AI Assistant</a></li>
+          <li><a href="{{ url_for('weather.weather_view') }}">Weather & Advisory</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Marketplace</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('marketplace.marketplace_view') }}">Direct Produce Listings</a></li>
+          <li><a href="{{ url_for('reservations.reservations_view') }}">Harvest Reservations</a></li>
+          <li><a href="{{ url_for('general.demand_view') }}">Community Demand Board</a></li>
+          <li><a href="{{ url_for('general.price_advisor_view') }}">Fair Price Advisor</a></li>
+          <li><a href="{{ url_for('traceability.traceability_view') }}">Batch Traceability</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Trust & Integrity</h4>
+        <p style="font-size: 0.82rem; color: #D1E7DD; margin-bottom: 0.75rem;">
+          Verified farm origin traceability and transparent direct transaction tracking.
+        </p>
+        <div style="background: rgba(255,255,255,0.08); padding: 0.75rem; border-radius: 8px; font-size: 0.78rem; color: #D1E7DD;">
+          <strong>Advisory Note:</strong> AI predictions and market reference values are informative decision aids. Consult qualified agricultural officers for critical crop interventions.
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>&copy; 2026 AgriTrust. Built with Python & Flask. All rights reserved.</span>
+      <span>Direct Farmer-to-Buyer Agricultural Ecosystem</span>
+    </div>
+  </footer>
+
+  <!-- Core JavaScript -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block title %}Harvest Reservations — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div class="badge badge-info" style="margin-bottom: 0.5rem;">FUTURE HARVEST CONTRACTING</div>
+      <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Harvest Reservation System</h1>
+      <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.98rem;">
+        Lock in guaranteed demand before picking. Buyers reserve fresh upcoming harvests in advance, and farmers eliminate price crashes and post-harvest rot.
+      </p>
+    </div>
+    {% if session.get('role') in ['FARMER', 'ADMIN'] %}
+      <button onclick="openModal('addFutureHarvestModal')" class="btn btn-primary">+ List Upcoming Harvest</button>
+    {% endif %}
+  </div>
+
+  <!-- Available Future Harvests to Reserve -->
+  <h2 style="font-size: 1.5rem; margin-bottom: 1.25rem; color: var(--dark-green);">
+    🌱 Upcoming Harvests Open for Advance Reservation
+  </h2>
+
+  {% if future_harvests %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+      {% for fh in future_harvests %}
+        <div class="card" style="border-top: 4px solid var(--info);">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">{{ fh.crop_name }}</h3>
+              <small style="color: var(--text-muted);">Grower: {{ fh.farmer.full_name }}</small>
+            </div>
+            <span class="badge badge-info">{{ fh.status }}</span>
+          </div>
+
+          <div style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 1.25rem;">
+            <div>📅 <strong>Expected Harvest:</strong> {{ fh.expected_harvest_date.strftime('%d %b %Y') }}</div>
+            <div>📍 <strong>Location:</strong> {{ fh.location }}</div>
+            <div>🏷️ <strong>Target Price:</strong> <strong style="color: var(--primary-green); font-size: 1.1rem;">₹{{ fh.target_price_per_kg }}/kg</strong></div>
+            <div>⚖️ <strong>Total Expected:</strong> {{ fh.expected_quantity }} kg</div>
+            <div>🔒 <strong>Already Reserved:</strong> {{ fh.reserved_quantity }} kg</div>
+            <div>✅ <strong>Remaining Available:</strong> <strong style="color: var(--dark-green);">{{ fh.remaining_quantity }} kg</strong></div>
+          </div>
+
+          {% if fh.notes %}
+            <div style="font-size: 0.82rem; color: var(--text-muted); background: #F8FAF8; padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem;">
+              {{ fh.notes }}
+            </div>
+          {% endif %}
+
+          <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
+            {% if session.get('role') in ['BUYER', 'ADMIN'] and fh.remaining_quantity > 0 %}
+              <button onclick="openBookModal({{ fh.id }}, '{{ fh.crop_name }}', {{ fh.remaining_quantity }}, {{ fh.target_price_per_kg }})" class="btn btn-sm btn-primary" style="width: 100%;">
+                Book Advance Reservation
+              </button>
+            {% elif fh.remaining_quantity <= 0 %}
+              <button class="btn btn-sm btn-outline" style="width: 100%; cursor: not-allowed;" disabled>Fully Reserved</button>
+            {% else %}
+              <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-outline" style="width: 100%; text-align: center;">Log In as Buyer to Reserve</a>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 2.5rem; margin-bottom: 3rem;">
+      <p style="color: var(--text-muted);">No upcoming harvests currently listed for reservation.</p>
+    </div>
+  {% endif %}
+
+  <!-- My Reservations Section (If Logged In) -->
+  {% if session.get('user_id') %}
+    <h2 style="font-size: 1.5rem; margin-bottom: 1.25rem; color: var(--dark-green);">
+      📑 Active Harvest Booking Records
+    </h2>
+
+    {% if my_reservations %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Crop Name</th>
+              <th>Farmer / Buyer</th>
+              <th>Reserved Qty</th>
+              <th>Locked Unit Price</th>
+              <th>Est. Total</th>
+              <th>Harvest Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in my_reservations %}
+              <tr>
+                <td><strong>{{ r.crop_name }}</strong></td>
+                <td>{{ r.farmer_user.full_name }}</td>
+                <td>{{ r.reserved_quantity }} kg</td>
+                <td>₹{{ r.unit_price }}/kg</td>
+                <td><strong>₹{{ "{:,.0f}".format(r.total_estimated_amount) }}</strong></td>
+                <td>{{ r.expected_harvest_date.strftime('%d %b %Y') }}</td>
+                <td>
+                  <span class="badge {% if r.status == 'Cancelled' %}badge-danger{% else %}badge-success{% endif %}">{{ r.status }}</span>
+                </td>
+                <td>
+                  {% if r.status != 'Cancelled' %}
+                    <form method="POST" action="{{ url_for('reservations.cancel_reservation', id=r.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this reservation?');">
+                      <button type="submit" class="btn btn-outline" style="padding: 0.25rem 0.5rem; font-size: 0.78rem; color: #dc3545; border-color: #dc3545;">Cancel</button>
+                    </form>
+                  {% else %}
+                    <span style="color: var(--text-muted); font-size: 0.8rem;">None</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="card" style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+        No reservation bookings logged for your account yet.
+      </div>
+    {% endif %}
+  {% endif %}
+
+</div>
+
+<!-- Modal: Add Future Harvest (Farmer) -->
+<div class="modal-overlay" id="addFutureHarvestModal">
+  <div class="modal-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.25rem;">List Upcoming Future Harvest</h3>
+      <button onclick="closeModal('addFutureHarvestModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('reservations.create_future_harvest') }}">
+      <div class="form-group">
+        <label class="form-label" for="fhCrop">Crop Variety *</label>
+        <input type="text" id="fhCrop" name="crop_name" list="supportedCropsList" class="form-control" placeholder="Select or type crop (e.g. Tomatoes, Cucumbers, Rice, Bananas, Bell Peppers)" required>
+        <datalist id="supportedCropsList">
+          <option value="Farm-Fresh Vine Tomatoes (Grade A)">Tomatoes</option>
+          <option value="Crisp Green English Cucumbers">English Cucumbers</option>
+          <option value="Aromatic Pusa Basmati Paddy Grain">Basmati Rice</option>
+          <option value="Fresh Robusta Bananas (Export Grade)">Robusta Bananas</option>
+          <option value="Red Bell Peppers (Capsicum)">Red Bell Peppers</option>
+          <option value="Yellow Bell Peppers (Capsicum)">Yellow Bell Peppers</option>
+        </datalist>
+        <small class="form-help">Select from supported platform crop varieties or enter your cultivar.</small>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="fhDate">Expected Harvest Date *</label>
+          <input type="date" id="fhDate" name="expected_harvest_date" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="fhQty">Expected Yield (kg) *</label>
+          <input type="number" step="10" id="fhQty" name="expected_quantity" class="form-control" placeholder="2500" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="fhPrice">Target Price (₹/kg) *</label>
+          <input type="number" step="0.5" id="fhPrice" name="target_price_per_kg" class="form-control" placeholder="38.0" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="fhLoc">Farm Location *</label>
+          <input type="text" id="fhLoc" name="location" class="form-control" placeholder="Nashik, Maharashtra" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="fhNotes">Crop Notes / Quality Assurance</label>
+        <textarea id="fhNotes" name="notes" class="form-control" rows="2" placeholder="Greenhouse grown, drip irrigated, organic certification status..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" onclick="closeModal('addFutureHarvestModal')" class="btn btn-outline">Cancel</button>
+        <button type="submit" class="btn btn-primary">Publish for Reservation</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Book Reservation (Buyer) -->
+<div class="modal-overlay" id="bookReservationModal">
+  <div class="modal-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.25rem;" id="bookModalTitle">Book Harvest Reservation</h3>
+      <button onclick="closeModal('bookReservationModal')" style="background:none;border:none;font-size:1.5rem;cursor:pointer;">&times;</button>
+    </div>
+
+    <form method="POST" action="{{ url_for('reservations.book_reservation') }}">
+      <input type="hidden" id="bookFhId" name="future_harvest_id">
+      
+      <div class="form-group">
+        <label class="form-label" for="bookQty">Quantity to Reserve (in kg) *</label>
+        <input type="number" step="10" min="10" id="bookQty" name="reserved_quantity" class="form-control" required>
+        <small class="form-help" id="bookMaxHelp">Max available: kg</small>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="bookPhone">Contact Phone Number *</label>
+        <input type="text" id="bookPhone" name="contact_phone" class="form-control" placeholder="+91 91234 56789" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="bookAddress">Receiving Hub / Delivery Address</label>
+        <textarea id="bookAddress" name="delivery_address" class="form-control" rows="2" placeholder="Cold storage terminal or retail store address..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="bookNotes">Reservation Specifications</label>
+        <input type="text" id="bookNotes" name="notes" class="form-control" placeholder="Target delivery window, packing crates...">
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" onclick="closeModal('bookReservationModal')" class="btn btn-outline">Cancel</button>
+        <button type="submit" class="btn btn-primary">Confirm Advance Booking</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openBookModal(fhId, cropName, remainingQty, price) {
+    document.getElementById('bookFhId').value = fhId;
+    document.getElementById('bookModalTitle').textContent = `Book Reservation: ${cropName}`;
+    const qtyInput = document.getElementById('bookQty');
+    qtyInput.max = remainingQty;
+    qtyInput.value = Math.min(100, remainingQty);
+    document.getElementById('bookMaxHelp').textContent = `Max available: ${remainingQty} kg (Fixed price: ₹${price}/kg)`;
+    openModal('bookReservationModal');
+  }
+</script>
+{% endblock %}

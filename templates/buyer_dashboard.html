@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Buyer Dashboard — AgriTrust Procurement{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div class="badge badge-success" style="margin-bottom: 0.5rem;">DIRECT PROCUREMENT DASHBOARD</div>
+      <h1 style="font-size: 2.2rem; margin-bottom: 0.35rem;">Buyer Portal: {{ user.full_name }}</h1>
+      <p style="color: var(--text-secondary); max-width: 780px; font-size: 0.95rem;">
+        Track your agricultural purchase orders, discover upcoming seasonal harvests, and monitor direct farm deliveries.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('marketplace.marketplace_view') }}" class="btn btn-primary">🛒 Browse Marketplace</a>
+      <a href="{{ url_for('general.create_demand') }}" class="btn btn-outline">+ Post Demand</a>
+    </div>
+  </div>
+
+  <!-- Summary Stats Grid -->
+  <div class="stats-grid" style="margin-bottom: 2.5rem;">
+    <div class="stat-card">
+      <div class="stat-icon green">🛍️</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ orders|length }}</div>
+        <div class="stat-label">Total Purchase Orders</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue">💰</div>
+      <div class="stat-data">
+        <div class="stat-value">₹{{ "{:,.2f}".format(total_spent) }}</div>
+        <div class="stat-label">Total Procurement Spend</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon yellow">⏳</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ active_orders|length }}</div>
+        <div class="stat-label">Active Orders In Transit / Processing</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green">🛡️</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ delivered_orders|length }}</div>
+        <div class="stat-label">Completed Farm Deliveries</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Orders Section -->
+  <div class="card" style="margin-bottom: 2.5rem; border-top: 4px solid var(--primary-green);">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem;">
+      <div>
+        <h2 style="font-size: 1.35rem; margin: 0; color: var(--dark-green);">My Recent Purchase Orders</h2>
+        <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: var(--text-secondary);">
+          Review order delivery fulfillment and monitor your direct farm procurement status.
+        </p>
+      </div>
+      <a href="{{ url_for('orders.orders_view') }}" class="btn btn-sm btn-outline">View All Orders &rarr;</a>
+    </div>
+
+    {% if orders %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Produce</th>
+              <th>Producer</th>
+              <th>Quantity</th>
+              <th>Total (₹)</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in orders[:5] %}
+              <tr>
+                <td>
+                  <strong style="color: var(--dark-green);">#{{ o.order_number }}</strong>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">{{ o.created_at.strftime('%d %b %Y') }}</div>
+                </td>
+                <td>
+                  <a href="{{ url_for('marketplace.product_detail', id=o.product.id) }}" style="font-weight: 600;">
+                    {{ o.product.title }}
+                  </a>
+                </td>
+                <td>
+                  <div>{{ o.product.farmer.full_name }}</div>
+                  <span class="badge badge-success" style="font-size: 0.7rem;">Verified Grower</span>
+                </td>
+                <td>{{ o.quantity }} {{ o.product.unit }}</td>
+                <td><strong>₹{{ "{:,.2f}".format(o.total_amount) }}</strong></td>
+                <td>
+                  <span class="badge {% if o.status == 'Delivered' %}badge-success{% elif o.status == 'Dispatched' %}badge-info{% elif o.status == 'Processing' %}badge-warning{% elif o.status == 'Cancelled' %}badge-danger{% else %}badge-neutral{% endif %}">
+                    {{ o.status }}
+                  </span>
+                </td>
+                <td>
+                  {% if o.status == 'Delivered' %}
+                    {% if o.review %}
+                      <span style="font-size: 0.8rem; color: var(--dark-green);">★ Rated {{ o.review.rating }}/5</span>
+                    {% else %}
+                      <a href="{{ url_for('orders.orders_view') }}" class="btn btn-sm btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.78rem;">
+                        ★ Review
+                      </a>
+                    {% endif %}
+                  {% else %}
+                    <span style="font-size: 0.8rem; color: var(--text-muted);">In fulfillment</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div style="text-align: center; padding: 2.5rem 1rem;">
+        <span style="font-size: 2.5rem;">🛍️</span>
+        <h4 style="margin: 0.75rem 0 0.25rem;">No Purchases Yet</h4>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.25rem;">
+          Connect directly with regional verified growers and procure high-quality produce.
+        </p>
+        <a href="{{ url_for('marketplace.marketplace_view') }}" class="btn btn-primary btn-sm">Explore Marketplace</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Upcoming Section (Advance Harvest Reservations) -->
+  {% if upcoming_harvests %}
+    <div class="card" style="margin-bottom: 2.5rem; padding: 1.5rem; border-top: 4px solid var(--info);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h3 style="font-size: 1.25rem; margin: 0; color: var(--dark-green);">🌱 Upcoming Harvests Open for Advance Procurement</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.25rem 0 0;">Lock in guaranteed fresh supply in advance across supported crops directly from verified regional growers.</p>
+        </div>
+        <a href="{{ url_for('reservations.reservations_view') }}" class="btn btn-sm btn-outline">Explore All Reservations &rarr;</a>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem;">
+        {% for fh in upcoming_harvests %}
+          <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.15rem; background: white; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <h4 style="font-size: 1.05rem; margin: 0; color: var(--dark-green);">{{ fh.crop_name }}</h4>
+                <span class="badge badge-info" style="font-size: 0.72rem;">{{ fh.status }}</span>
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 0.75rem;">
+                <div>👨‍🌾 <strong>Grower:</strong> {{ fh.farmer.full_name }}</div>
+                <div>📍 <strong>Location:</strong> {{ fh.location }}</div>
+                <div>📅 <strong>Expected Harvest:</strong> {{ fh.expected_harvest_date.strftime('%d %b %Y') }}</div>
+                <div>⚖️ <strong>Available:</strong> <strong style="color: var(--dark-green);">{{ fh.remaining_quantity }} kg</strong> (of {{ fh.expected_quantity }} kg)</div>
+              </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 0.75rem; margin-top: 0.5rem;">
+              <span style="font-weight: 800; color: var(--primary-green); font-size: 1.1rem;">₹{{ fh.target_price_per_kg }}/kg</span>
+              <a href="{{ url_for('reservations.reservations_view') }}" class="btn btn-sm btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;">Book Advance</a>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Featured Available Verified Harvests -->
+  {% if featured_products %}
+    <div class="card" style="padding: 1.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <div>
+          <h3 style="font-size: 1.25rem; margin: 0; color: var(--dark-green);">Available Produce from Verified Farmers</h3>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.25rem 0 0;">Buy fresh crops directly with audited origins</p>
+        </div>
+        <a href="{{ url_for('marketplace.marketplace_view') }}" class="btn btn-sm btn-primary">Browse All &rarr;</a>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem;">
+        {% for prod in featured_products %}
+          <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); overflow: hidden; background: white; display: flex; flex-direction: column;">
+            <div style="height: 120px; position: relative;">
+              <img src="{{ prod.image_url }}" alt="{{ prod.title }}" style="width: 100%; height: 100%; object-fit: cover;">
+              {% if prod.is_quality_verified %}
+                <span class="badge badge-success" style="position: absolute; top: 8px; right: 8px; font-size: 0.7rem;">🛡️ Verified</span>
+              {% else %}
+                <span class="badge" style="position: absolute; top: 8px; right: 8px; font-size: 0.7rem; background: #FEF3C7; color: #92400E;">Unverified</span>
+              {% endif %}
+            </div>
+            <div style="padding: 0.85rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <h4 style="font-size: 0.95rem; margin: 0 0 0.35rem;">
+                  <a href="{{ url_for('marketplace.product_detail', id=prod.id) }}">{{ prod.title }}</a>
+                </h4>
+                <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                  {{ prod.location }} • {{ prod.quantity }} {{ prod.unit }} left
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F1F5F9; padding-top: 0.5rem;">
+                <span style="font-weight: 700; color: var(--primary-green);">₹{{ prod.price_per_unit }}/{{ prod.unit }}</span>
+                <a href="{{ url_for('marketplace.product_detail', id=prod.id) }}" class="btn btn-sm btn-outline" style="padding: 0.2rem 0.55rem; font-size: 0.78rem;">View</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

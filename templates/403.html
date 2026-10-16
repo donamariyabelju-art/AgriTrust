@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}403 Forbidden — Access Restricted — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 600px; margin-top: 4rem; margin-bottom: 4rem; text-align: center;">
+  <div class="card" style="padding: 3rem 2rem; border-top: 5px solid var(--danger);">
+    <div style="font-size: 3.5rem; margin-bottom: 1rem;">🛡️🔒</div>
+    <div class="badge badge-danger" style="margin-bottom: 0.75rem; font-size: 0.85rem;">403 FORBIDDEN — STRICT ACCESS RESTRICTION</div>
+    <h1 style="font-size: 1.85rem; color: var(--dark-green); margin-bottom: 0.5rem;">Access Denied</h1>
+    <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 2rem;">
+      You do not have permission to access this area or record. AgriTrust enforces strict role separation and record ownership at the server level.
+    </p>
+
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      {% if session.get('role') == 'FARMER' %}
+        <a href="{{ url_for('dashboard.dashboard_view') }}" class="btn btn-primary">Return to Farm Dashboard</a>
+      {% elif session.get('role') == 'BUYER' %}
+        <a href="{{ url_for('dashboard.buyer_dashboard') }}" class="btn btn-primary">Return to Buyer Dashboard</a>
+      {% elif session.get('role') == 'ADMIN' %}
+        <a href="{{ url_for('admin.admin_view') }}" class="btn btn-primary">Return to Admin Panel</a>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Log In with Authorized Account</a>
+      {% endif %}
+      <a href="{{ url_for('marketplace.marketplace_view') }}" class="btn btn-outline">Go to Marketplace</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

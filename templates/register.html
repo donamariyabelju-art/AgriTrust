@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Account — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 540px; margin-top: 2.5rem; margin-bottom: 3rem;">
+  <div class="card" style="padding: 2.25rem;">
+    <div style="text-align: center; margin-bottom: 1.75rem;">
+      <div class="brand-logo" style="justify-content: center; margin-bottom: 0.5rem;">
+        <span class="logo-icon">🌱</span>
+        <span>AgriTrust</span>
+      </div>
+      <h2 style="font-size: 1.5rem; margin-bottom: 0.35rem;">Create Your Account</h2>
+      <p style="font-size: 0.88rem; color: var(--text-muted);">Join the transparent agricultural decision and trading platform</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.register') }}">
+      <div class="form-group">
+        <label class="form-label">I am joining as a:</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem;">
+          <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.65rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+            <input type="radio" name="role" value="FARMER" checked>
+            <div>
+              <strong style="display: block; font-size: 0.85rem;">Farmer</strong>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">Sell harvest</span>
+            </div>
+          </label>
+          <label style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 0.65rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer;">
+            <input type="radio" name="role" value="BUYER">
+            <div>
+              <strong style="display: block; font-size: 0.85rem;">Buyer</strong>
+              <span style="font-size: 0.72rem; color: var(--text-muted);">Procure crops</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="full_name">Full Name / Organization Name *</label>
+        <input type="text" id="full_name" name="full_name" class="form-control" placeholder="e.g. Ramesh Patel or Fresh Agro Co." required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="username">Username *</label>
+          <input type="text" id="username" name="username" class="form-control" placeholder="ramesh_farmer" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone Number</label>
+          <input type="text" id="phone" name="phone" class="form-control" placeholder="+91 98765 43210">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email Address *</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="farmer@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="location">Location / District</label>
+        <input type="text" id="location" name="location" class="form-control" placeholder="e.g. Nashik, Maharashtra">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="password">Password *</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="Min 6 characters" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm Password *</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat password" required>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.75rem;">
+        Register AgriTrust Account
+      </button>
+    </form>
+
+    <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.85rem; text-align: center; color: var(--text-muted);">
+      Already have an account? <a href="{{ url_for('auth.login') }}" style="font-weight: 600;">Log In</a>
+      <div style="margin-top: 0.75rem; font-size: 0.8rem; background: var(--pale-green); padding: 0.5rem 0.75rem; border-radius: 6px; color: var(--dark-green);">
+        💡 Default Platform Admin: <strong>admin</strong> | Password: <code>Admin@123</code>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

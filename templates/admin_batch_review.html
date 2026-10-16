@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+
+{% block title %}Inspect Batch #{{ batch.batch_code }} — Admin Quality Verification{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 950px;">
+
+  <!-- Breadcrumb -->
+  <div style="margin-bottom: 1.5rem; font-size: 0.88rem; color: var(--text-muted);">
+    <a href="{{ url_for('admin.admin_view') }}">Admin Control Center</a> &rsaquo; 
+    <span>Product Quality Verification</span> &rsaquo; 
+    <span style="color: var(--text-primary); font-weight: 600;">#{{ batch.batch_code }}</span>
+  </div>
+
+  <!-- Header Card -->
+  <div class="card" style="margin-bottom: 2rem; border-top: 5px solid var(--primary-green);">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem; margin-bottom: 1.25rem;">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+          <h1 style="font-size: 1.85rem; margin: 0; color: var(--dark-green);">
+            Quality Inspection: {{ batch.crop_name }}
+          </h1>
+          <span class="badge badge-neutral" style="font-family: monospace; font-size: 0.9rem;">
+            #{{ batch.batch_code }}
+          </span>
+        </div>
+        <p style="color: var(--text-secondary); margin: 0; font-size: 0.92rem;">
+          Registered by <strong>{{ batch.farmer.full_name }}</strong> ({{ batch.farmer.username }}) on {{ batch.created_at.strftime('%d %B %Y, %I:%M %p') }}
+        </p>
+      </div>
+
+      <!-- Current Stage Badge -->
+      {% set cfg = stage_config[batch.verification_stage] %}
+      <div style="text-align: right;">
+        <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.95rem; background: {{ cfg.bg }}; color: {{ cfg.color }};">
+          <span>{{ cfg.icon }}</span>
+          <span>{{ batch.verification_stage }}</span>
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">
+          Independent Origin Verified: <strong>{% if batch.is_independently_verified %}Yes{% else %}Pending Approval{% endif %}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Farmer Identity & Batch Specification Columns -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 1.5rem;">
+      
+      <!-- Left Column: Farmer & Origin Details -->
+      <div style="background: #FAFDF9; padding: 1.25rem; border-radius: var(--radius-md); font-size: 0.88rem; line-height: 1.8;">
+        <h3 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--dark-green); display: flex; align-items: center; gap: 0.4rem;">
+          <span>👨‍🌾</span> Farmer Identity & Profile
+        </h3>
+        <div><strong>Producer:</strong> {{ batch.farmer.full_name }}</div>
+        <div><strong>Username / ID:</strong> {{ batch.farmer.username }} (User #{{ batch.farmer.id }})</div>
+        <div><strong>Email:</strong> {{ batch.farmer.email }}</div>
+        <div><strong>Contact Phone:</strong> {{ batch.farmer.phone or 'Not provided' }}</div>
+        <div><strong>Farm Origin:</strong> {{ batch.farm.name if batch.farm else 'Registered Grower Property' }}</div>
+        <div><strong>Farm Gate Location:</strong> {{ batch.location or (batch.farm.location if batch.farm else batch.farmer.location or 'Regional APMC') }}</div>
+        <div>
+          <strong>Producer Trust Status:</strong> 
+          <span class="badge badge-success" style="font-size: 0.75rem;">Verified Producer</span>
+        </div>
+      </div>
+
+      <!-- Right Column: Produce Specifications -->
+      <div style="background: #F8FAFC; padding: 1.25rem; border-radius: var(--radius-md); font-size: 0.88rem; line-height: 1.8;">
+        <h3 style="font-size: 1.05rem; margin-bottom: 0.75rem; color: var(--dark-green); display: flex; align-items: center; gap: 0.4rem;">
+          <span>📦</span> Harvest Lot Specifications
+        </h3>
+        <div><strong>Crop Variety:</strong> {{ batch.crop_name }}</div>
+        <div><strong>Category:</strong> {{ batch.category }}</div>
+        <div><strong>Harvest Date:</strong> {{ batch.harvest_date.strftime('%d %B %Y') }}</div>
+        <div><strong>Lot Quantity:</strong> {{ batch.quantity }} {{ batch.unit }}</div>
+        <div><strong>Asking Price:</strong> {% if batch.asking_price %}₹{{ batch.asking_price }} / {{ batch.unit }}{% else %}Not specified{% endif %}</div>
+        <div><strong>Declared Quality Grade:</strong> {{ batch.quality_grade }}</div>
+        <div><strong>Storage Protocol:</strong> {{ batch.storage_conditions or 'Standard Controlled Shed' }}</div>
+      </div>
+
+    </div>
+
+    <!-- Product Description -->
+    {% if batch.description %}
+      <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; font-size: 0.9rem;">
+        <strong>Farmer Quality Notes / Description:</strong>
+        <p style="margin: 0.35rem 0 0; color: var(--text-secondary); line-height: 1.6;">{{ batch.description }}</p>
+      </div>
+    {% endif %}
+
+    <!-- Uploaded Evidence: Images & Quality Documents -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+      
+      <!-- Product Image -->
+      <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--dark-green);">
+          📸 Uploaded Produce Photo
+        </h4>
+        {% if batch.image_url %}
+          <img src="{{ batch.image_url }}" alt="{{ batch.crop_name }}" style="width: 100%; height: 220px; object-fit: cover; border-radius: var(--radius-sm);">
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.4rem;">
+            Source: <a href="{{ batch.image_url }}" target="_blank" style="text-decoration: underline;">View Full Resolution</a>
+          </div>
+        {% else %}
+          <div style="height: 180px; display: flex; align-items: center; justify-content: center; background: #F8FAFC; border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.88rem;">
+            No photo uploaded by producer.
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Supporting Quality Documents -->
+      <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem; color: var(--dark-green);">
+          📑 Supporting Quality Evidence / Certificates
+        </h4>
+        {% if batch.document_url %}
+          <div style="background: #FAFDF9; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; text-align: center;">
+            <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📜</div>
+            <strong style="font-size: 0.95rem; display: block; margin-bottom: 0.25rem;">{{ batch.document_name or 'Quality Certificate' }}</strong>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">Supporting lab assay, pesticide test, or certification document.</p>
+            <a href="{{ batch.document_url }}" target="_blank" class="btn btn-sm btn-primary">
+              Download / Inspect Document
+            </a>
+          </div>
+        {% else %}
+          <div style="height: 180px; display: flex; align-items: center; justify-content: center; background: #F8FAFC; border-radius: var(--radius-sm); color: var(--text-muted); font-size: 0.88rem; text-align: center; padding: 1rem;">
+            No supporting quality certificate uploaded with this batch.
+          </div>
+        {% endif %}
+      </div>
+
+    </div>
+
+    <!-- Scannable QR Code Verification Link -->
+    {% if qr_data_uri %}
+      <div style="display: flex; align-items: center; gap: 1.5rem; background: #FAFDF9; border: 1px solid #D1E7DD; border-radius: var(--radius-md); padding: 1rem 1.25rem; margin-bottom: 2rem;">
+        <img src="{{ qr_data_uri }}" alt="Batch QR Code" style="width: 85px; height: 85px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+        <div>
+          <strong style="font-size: 0.95rem; color: var(--dark-green);">Public Traceability Passport QR Link</strong>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.2rem 0 0.4rem; line-height: 1.5;">
+            Buyers scanning this QR code access the live public origin passport. Approved public data is displayed without exposing private documents or internal admin notes.
+          </p>
+          <a href="{{ url_for('traceability.batch_detail', batch_code=batch.batch_code) }}" target="_blank" class="btn btn-sm btn-outline">
+            Open Public Passport View &rarr;
+          </a>
+        </div>
+      </div>
+    {% endif %}
+
+  </div>
+
+  <!-- Admin Decision & Stage Transition Form -->
+  <div class="card" style="margin-bottom: 2.5rem; border: 2px solid var(--primary-green); box-shadow: var(--shadow-md);">
+    <div class="card-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+      <div>
+        <div class="badge badge-primary" style="margin-bottom: 0.35rem;">ADMINISTRATIVE ACTION</div>
+        <h2 style="font-size: 1.35rem; margin: 0; color: var(--dark-green);">Record Quality Verification Decision</h2>
+      </div>
+      <span class="badge badge-neutral">Logged as: {{ session.get('username') }}</span>
+    </div>
+
+    <form method="POST" action="{{ url_for('admin.review_batch', id=batch.id) }}" style="padding-top: 1.25rem;">
+      
+      <!-- Verification Stage Selector -->
+      <div class="form-group">
+        <label class="form-label" for="verStage"><strong>Verification Decision / Target Stage *</strong></label>
+        <select id="verStage" name="verification_stage" class="form-select" style="font-size: 1rem; padding: 0.65rem;" required>
+          <option value="Under Review" {% if batch.verification_stage == 'Under Review' %}selected{% endif %}>
+            🔍 Under Review — Actively examining specifications & evidence
+          </option>
+          <option value="Action Required" {% if batch.verification_stage == 'Action Required' %}selected{% endif %}>
+            ⚠️ Action Required — Request missing evidence or corrections from farmer
+          </option>
+          <option value="Quality Verified" {% if batch.verification_stage == 'Quality Verified' %}selected{% endif %}>
+            🛡️ Quality Verified — Approve quality verification and enable marketplace sale
+          </option>
+          <option value="Rejected" {% if batch.verification_stage == 'Rejected' %}selected{% endif %}>
+            ❌ Rejected — Reject harvest batch with documented administrative reason
+          </option>
+          <option value="Submitted" {% if batch.verification_stage == 'Submitted' %}selected{% endif %}>
+            📝 Submitted — Reset / Re-queue for review
+          </option>
+        </select>
+        <small class="form-help">Only authorized administrators can modify quality verification stages and approve/reject produce.</small>
+      </div>
+
+      <!-- Parameters for Quality Verified -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1.2fr; gap: 1rem; background: #F8FAF8; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.25rem;">
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" for="qualityScore">Quality Score (0 - 100)</label>
+          <input type="number" min="0" max="100" id="qualityScore" name="quality_score" class="form-control" value="{{ batch.quality_score or 90 }}">
+        </div>
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" for="qualityGrade">Quality Classification</label>
+          <select id="qualityGrade" name="quality_grade" class="form-select">
+            <option value="Grade A" {% if batch.quality_grade == 'Grade A' %}selected{% endif %}>Grade A (Premium)</option>
+            <option value="Grade B" {% if batch.quality_grade == 'Grade B' %}selected{% endif %}>Grade B (Standard)</option>
+            <option value="Certified Organic" {% if batch.quality_grade == 'Certified Organic' %}selected{% endif %}>Certified Organic</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin: 0;">
+          <label class="form-label" for="verifierName">Inspector / Agency Title</label>
+          <input type="text" id="verifierName" name="verifier_name" class="form-control" placeholder="AgriTrust Quality Inspector" value="{{ batch.verifier_name or 'AgriTrust Certified Quality Inspector' }}">
+        </div>
+      </div>
+
+      <!-- Review Reason & Farmer Feedback (Shared with Farmer) -->
+      <div class="form-group">
+        <label class="form-label" for="reviewReason">
+          <strong>Review Reason & Feedback for Farmer</strong>
+          <span style="font-weight: 400; color: var(--text-muted);">(Appropriate to share with producer)</span>
+        </label>
+        <textarea id="reviewReason" name="review_reason" class="form-control" rows="3" placeholder="Explain the decision reason or specify exact corrections needed if Action Required...">{{ batch.admin_feedback or '' }}</textarea>
+        <small class="form-help">This feedback is displayed directly to the farmer on their 'My Product Verification' dashboard.</small>
+      </div>
+
+      <!-- Quality Observations & Internal Notes (Confidential) -->
+      <div class="form-group">
+        <label class="form-label" for="internalNotes">
+          <strong>Internal Quality Observations & Administrative Notes</strong>
+          <span style="font-weight: 400; color: var(--danger);">(Strictly confidential &mdash; never visible to buyers or farmers)</span>
+        </label>
+        <textarea id="internalNotes" name="internal_notes" class="form-control" rows="2" placeholder="Internal audit observations, risk assessments, or verification corroboration notes...">{{ batch.internal_notes or '' }}</textarea>
+        <small class="form-help">Kept private for platform regulatory compliance and audit logs.</small>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.25rem;">
+        <a href="{{ url_for('admin.admin_view') }}" class="btn btn-outline">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">
+          Save Decision & Update Verification Stage
+        </button>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Immutable Chronological Stage History (Full Audit Trail) -->
+  <div class="card" style="margin-bottom: 3rem;">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Chronological Verification & Audit Log History</h3>
+        <p style="margin: 0; font-size: 0.85rem; color: var(--text-muted);">
+          Complete immutable record of all stage transitions, admin accounts, and timestamps for Batch #{{ batch.batch_code }}
+        </p>
+      </div>
+      <span class="badge badge-neutral">{{ batch.verification_history|length }} Entry(s)</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Stage Transition</th>
+            <th>Actor Account</th>
+            <th>Action Type</th>
+            <th>Shared Feedback</th>
+            <th>Internal Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for log in batch.verification_history %}
+            <tr>
+              <td style="white-space: nowrap; font-size: 0.82rem;">
+                <strong>{{ log.created_at.strftime('%d %b %Y') }}</strong><br>
+                <small style="color: var(--text-muted);">{{ log.created_at.strftime('%I:%M:%S %p') }}</small>
+              </td>
+              <td>
+                {% if log.previous_stage %}
+                  <span class="badge badge-neutral" style="font-size: 0.75rem;">{{ log.previous_stage }}</span> &rarr;
+                {% endif %}
+                <span class="badge {% if log.new_stage == 'Quality Verified' %}badge-success{% elif log.new_stage == 'Action Required' %}badge-danger{% elif log.new_stage == 'Rejected' %}badge-danger{% else %}badge-info{% endif %}" style="font-size: 0.75rem;">
+                  {{ log.new_stage }}
+                </span>
+              </td>
+              <td style="font-size: 0.85rem;">
+                <strong>{{ log.actor.full_name or log.actor.username }}</strong><br>
+                <small style="color: var(--text-muted);">Role: {{ log.actor.role }} (ID #{{ log.actor.id }})</small>
+              </td>
+              <td>
+                <span class="badge badge-neutral" style="font-size: 0.72rem;">{{ log.action_type }}</span>
+              </td>
+              <td style="font-size: 0.85rem; max-width: 200px;">
+                {{ log.comments or '-' }}
+              </td>
+              <td style="font-size: 0.85rem; max-width: 200px; color: var(--text-secondary); font-style: italic;">
+                {{ log.internal_notes or '-' }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Crop Health Scanner — AgriTrust AI Diagnostic{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">Computer Vision & Plant Pathology</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Crop Health Scanner</h1>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 1rem;">
+      Upload a photograph of any crop leaf or fruit showing symptoms. AgriTrust applies OpenCV image validation and TensorFlow/Keras diagnostic models to detect pathogen presence, symptoms, and organic/chemical remedies.
+    </p>
+  </div>
+
+  <!-- Mandatory Agricultural Disclaimer per Prompt -->
+  <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: var(--radius-md); padding: 0.85rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: #92400E;">
+    <span style="font-size: 1.25rem;">⚠️</span>
+    <div>
+      <strong>Agricultural Advisory Disclaimer:</strong> AI predictions are advisory and may be inaccurate. Consult an agricultural expert or certified agronomy officer if symptoms are severe or unclear.
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; align-items: start;">
+    
+    <!-- Left Column: Upload and Controls -->
+    <div class="card">
+      <h3 style="font-size: 1.25rem; margin-bottom: 1rem; color: var(--dark-green);">
+        📸 Upload Leaf Image for Inspection
+      </h3>
+
+      <form method="POST" action="{{ url_for('disease.crop_health_view') }}" enctype="multipart/form-data" id="scanForm">
+        
+        <div class="form-group">
+          <label class="form-label" for="cropImageInput">Select Image File (PNG, JPG, JPEG, WEBP - Max 16MB)</label>
+          <input type="file" id="cropImageInput" name="crop_image" class="form-control" accept=".png,.jpg,.jpeg,.webp" data-preview="scannerImgPreview" required>
+          <small class="form-help">Ensure leaf is in focus under clear natural daylight without extreme glare.</small>
+        </div>
+
+        <!-- Image Preview Box -->
+        <div style="border: 2px dashed var(--border-color); border-radius: var(--radius-md); padding: 1rem; text-align: center; margin-bottom: 1.25rem; background: #FAFDF9;">
+          <img id="scannerImgPreview" src="{% if uploaded_image_url %}{{ uploaded_image_url }}{% else %}#{% endif %}" alt="Leaf Preview" style="max-height: 240px; max-width: 100%; border-radius: var(--radius-sm); margin: 0 auto; display: {% if uploaded_image_url %}block{% else %}none{% endif %};">
+          <div id="previewPlaceholder" style="color: var(--text-muted); font-size: 0.88rem; display: {% if uploaded_image_url %}none{% else %}block{% endif %};">
+            Image preview will display here once selected
+          </div>
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="form-group" style="background: #F3F7F3; padding: 0.75rem 1rem; border-radius: var(--radius-md);">
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.88rem; cursor: pointer; margin-bottom: 0;">
+            <input type="checkbox" name="demo_mode" value="1" {% if not model_configured %}checked{% endif %}>
+            <span>Run OpenCV Diagnostic Demonstration Mode</span>
+          </label>
+          <small style="display: block; color: var(--text-muted); font-size: 0.78rem; margin-top: 0.25rem;">
+            {% if not model_configured %}
+              (Trained TensorFlow model file not found in <code>ai/models/crop_disease_model.h5</code>. Demonstration mode active with OpenCV heuristic pathology analysis.)
+            {% else %}
+              (Trained TensorFlow model is active and configured.)
+            {% endif %}
+          </small>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="scanSubmitBtn" style="width: 100%; padding: 0.85rem;">
+          🔍 Scan & Analyze Crop Health
+        </button>
+
+        <div id="scanLoadingIndicator" style="display: none; text-align: center; margin-top: 1rem; color: var(--primary-green); font-weight: 600;">
+          <span style="display: inline-block; animation: spin 1s infinite linear;">⚙️</span> Processing image with OpenCV and Neural Model...
+        </div>
+      </form>
+    </div>
+
+    <!-- Right Column: Diagnostic Results -->
+    <div>
+      {% if scan_result and scan_result.success %}
+        <div class="card" style="border-top: 5px solid {% if scan_result.health_status == 'Healthy' %}#2E7D32{% elif scan_result.health_status == 'Moderate Risk' %}#F59E0B{% else %}#DC2626{% endif %};">
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+            <div>
+              <span class="badge {% if scan_result.health_status == 'Healthy' %}badge-success{% elif scan_result.health_status == 'Moderate Risk' %}badge-warning{% else %}badge-danger{% endif %}" style="margin-bottom: 0.35rem;">
+                {{ scan_result.health_status }}
+              </span>
+              <h2 style="font-size: 1.5rem; color: var(--dark-green);">{{ scan_result.detected_disease }}</h2>
+              <small style="color: var(--text-muted);">Plant: {{ scan_result.plant_name }}</small>
+            </div>
+            
+            <div style="text-align: right;">
+              <div style="font-size: 0.8rem; color: var(--text-muted);">Confidence</div>
+              <div style="font-size: 1.6rem; font-weight: 800; color: var(--primary-green); font-family: 'Outfit';">
+                {{ scan_result.confidence_score }}%
+              </div>
+            </div>
+          </div>
+
+          {% if scan_result.model_notice %}
+            <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #1E40AF; margin-bottom: 1.25rem;">
+              {{ scan_result.model_notice }}
+            </div>
+          {% endif %}
+
+          <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.92rem; line-height: 1.6;">
+            
+            <div style="background: #FAFDF9; padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <strong style="color: var(--dark-green); display: block; margin-bottom: 0.25rem;">🔍 Observed Symptoms:</strong>
+              <p style="color: var(--text-secondary);">{{ scan_result.symptoms }}</p>
+            </div>
+
+            <div style="background: #FAFDF9; padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+              <strong style="color: var(--dark-green); display: block; margin-bottom: 0.25rem;">🧬 Possible Causes:</strong>
+              <p style="color: var(--text-secondary);">{{ scan_result.possible_causes }}</p>
+            </div>
+
+            <div style="background: #F0FDF4; padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid #BBF7D0;">
+              <strong style="color: var(--dark-green); display: block; margin-bottom: 0.25rem;">🛡️ Preventive Measures:</strong>
+              <p style="color: var(--text-secondary);">{{ scan_result.preventive_measures }}</p>
+            </div>
+
+            <div style="background: #FEF2F2; padding: 0.85rem; border-radius: var(--radius-sm); border: 1px solid #FECACA;">
+              <strong style="color: #991B1B; display: block; margin-bottom: 0.25rem;">💊 Recommended Next Steps:</strong>
+              <p style="color: var(--text-secondary);">{{ scan_result.recommended_steps }}</p>
+            </div>
+
+          </div>
+
+          <div style="margin-top: 1.25rem; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+            <em>{{ scan_result.disclaimer }}</em>
+          </div>
+
+        </div>
+      {% else %}
+        <div class="card" style="text-align: center; padding: 3rem 1.5rem; background: #FAFDF9;">
+          <span style="font-size: 3.5rem;">🔬</span>
+          <h3 style="margin: 1rem 0 0.5rem;">Diagnostic Scanner Ready</h3>
+          <p style="color: var(--text-secondary); max-width: 420px; margin: 0 auto;">
+            Upload an image of tomato, rice, cucumber, or banana leaves to detect disease onset and get agronomy remedies.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Recent Scan Logs -->
+  {% if recent_scans %}
+    <div style="margin-top: 3rem;">
+      <h3 style="font-size: 1.35rem; margin-bottom: 1rem; color: var(--dark-green);">
+        📋 Recent Health Scans for Your Farm
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+        {% for scan in recent_scans %}
+          <div class="card" style="display: flex; gap: 1rem; align-items: center; padding: 1rem;">
+            <img src="{{ scan.image_path }}" alt="Scan thumbnail" style="width: 65px; height: 65px; object-fit: cover; border-radius: var(--radius-sm);">
+            <div>
+              <strong style="display: block; font-size: 0.95rem; color: var(--dark-green);">{{ scan.detected_disease }}</strong>
+              <small style="color: var(--text-muted); display: block;">{{ scan.crop_name }} &bull; {{ scan.confidence_score }}% conf</small>
+              <small style="color: var(--text-muted);">{{ scan.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const scanForm = document.getElementById('scanForm');
+  const scanBtn = document.getElementById('scanSubmitBtn');
+  const scanLoading = document.getElementById('scanLoadingIndicator');
+
+  if (scanForm && scanBtn && scanLoading) {
+    scanForm.addEventListener('submit', () => {
+      scanBtn.disabled = true;
+      scanLoading.style.display = 'block';
+    });
+  }
+</script>
+<style>
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
+{% endblock %}

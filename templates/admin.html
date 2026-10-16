@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Panel — AgriTrust Platform Moderation{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+    <div class="badge badge-neutral" style="margin-bottom: 0.5rem;">PLATFORM INTEGRITY & AUDIT</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Admin Control Center</h1>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.98rem;">
+      Manage registered producers and buyers, conduct independent harvest batch audits, supervise product quality verification, and maintain direct marketplace integrity.
+    </p>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="stats-grid" style="margin-bottom: 2.5rem;">
+    <div class="stat-card">
+      <div class="stat-icon green">👥</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ stats.total_users }}</div>
+        <div class="stat-label">Total Users ({{ stats.total_farmers }} Farmers, {{ stats.total_buyers }} Buyers)</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue">📦</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ stats.total_products }}</div>
+        <div class="stat-label">Marketplace Produce Listings</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green">🛡️</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ stats.verified_batches }}/{{ stats.total_batches }}</div>
+        <div class="stat-label">Quality Verified Batches</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon yellow">⏳</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ stats.pending_batches }}</div>
+        <div class="stat-label">Batches Pending Review ({{ stats.action_required_batches }} Action Req.)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dedicated Section: Product Quality Verification -->
+  <div class="card" id="product-quality-verification" style="margin-bottom: 2.5rem; border-top: 4px solid var(--primary-green);">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem;">
+      <div>
+        <div class="badge badge-success" style="margin-bottom: 0.35rem;">INSPECTION WORKFLOW</div>
+        <h2 style="font-size: 1.45rem; margin: 0; color: var(--dark-green);">Product Quality Verification</h2>
+        <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: var(--text-secondary);">
+          Review farmer submitted lot specifications, uploaded produce imagery, and supporting lab/origin certificates. Only authenticated admins can approve, reject, or request corrections.
+        </p>
+      </div>
+      <span class="badge badge-neutral">{{ batches|length }} Batches Shown</span>
+    </div>
+
+    <!-- Filter Tabs by Stage -->
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; padding: 1rem 1.25rem; background: #FAFDF9; border-bottom: 1px solid var(--border-color);">
+      <span style="font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin-right: 0.5rem;">FILTER BY STAGE:</span>
+      
+      <a href="{{ url_for('admin.admin_view') }}" 
+         class="btn btn-sm {% if current_stage_filter == 'All' %}btn-primary{% else %}btn-outline{% endif %}" 
+         style="border-radius: 20px; font-size: 0.8rem;">
+        All ({{ stats.total_batches }})
+      </a>
+
+      {% for stage in valid_stages %}
+        {% set cfg = stage_config[stage] %}
+        <a href="{{ url_for('admin.admin_view', stage=stage) }}" 
+           class="btn btn-sm {% if current_stage_filter == stage %}btn-primary{% else %}btn-outline{% endif %}" 
+           style="border-radius: 20px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+          <span>{{ cfg.icon }}</span>
+          <span>{{ stage }}</span>
+          <span style="background: rgba(0,0,0,0.08); padding: 0.1rem 0.45rem; border-radius: 10px; font-size: 0.72rem;">
+            {{ stats.stage_counts.get(stage, 0) }}
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+
+    <!-- Batches Table -->
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>UHVC Code</th>
+            <th>Crop / Variety</th>
+            <th>Farmer / Origin</th>
+            <th>Harvest Date</th>
+            <th>Quantity</th>
+            <th>Quality Grade</th>
+            <th>Verification Stage</th>
+            <th>Evidence on File</th>
+            <th>Administrative Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if batches %}
+            {% for b in batches %}
+              {% set cfg = stage_config[b.verification_stage] %}
+              <tr>
+                <td style="white-space: nowrap;">
+                  <strong style="font-family: monospace; color: var(--dark-green); font-size: 0.9rem;">
+                    #{{ b.batch_code }}
+                  </strong>
+                  {% if b.asking_price %}
+                    <div style="font-size: 0.75rem; color: var(--text-muted);">₹{{ b.asking_price }}/{{ b.unit }}</div>
+                  {% endif %}
+                </td>
+                <td>
+                  <strong>{{ b.crop_name }}</strong><br>
+                  <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 0.72rem;">{{ b.category }}</span>
+                </td>
+                <td>
+                  <div><strong>{{ b.farmer.full_name }}</strong></div>
+                  <small style="color: var(--text-muted);">📍 {{ b.location or (b.farm.location if b.farm else 'Nashik') }}</small>
+                </td>
+                <td style="white-space: nowrap; font-size: 0.85rem;">
+                  {{ b.harvest_date.strftime('%d %b %Y') }}
+                </td>
+                <td style="white-space: nowrap; font-size: 0.88rem;">
+                  <strong>{{ b.quantity }} {{ b.unit }}</strong>
+                </td>
+                <td>
+                  <span class="badge badge-neutral" style="font-size: 0.78rem;">{{ b.quality_grade }}</span>
+                </td>
+                <td>
+                  <span class="badge" style="background: {{ cfg.bg }}; color: {{ cfg.color }}; font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 0.3rem;">
+                    <span>{{ cfg.icon }}</span>
+                    <span>{{ b.verification_stage }}</span>
+                  </span>
+                  {% if b.is_independently_verified %}
+                    <div style="font-size: 0.72rem; color: var(--primary-green); font-weight: 600; margin-top: 0.2rem;">
+                      Score: {{ b.quality_score }}/100
+                    </div>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.82rem;">
+                  {% if b.image_url %}
+                    <span title="Produce photo uploaded">📸 Photo</span>
+                  {% endif %}
+                  {% if b.document_url %}
+                    <div><a href="{{ b.document_url }}" target="_blank" style="color: var(--primary-green); text-decoration: underline;">📄 Certificate</a></div>
+                  {% endif %}
+                  {% if not b.image_url and not b.document_url %}
+                    <span style="color: var(--text-muted); font-style: italic;">None</span>
+                  {% endif %}
+                </td>
+                <td style="white-space: nowrap;">
+                  <a href="{{ url_for('admin.review_batch', id=b.id) }}" class="btn btn-sm btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.82rem;">
+                    🔍 Inspect & Review
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          {% else %}
+            <tr>
+              <td colspan="9" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                No harvest batches matching the selected stage filter.
+              </td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Dedicated Section: Harvest Lifecycle Management (Admin Only) -->
+  <div class="card" id="harvest-lifecycle-management" style="margin-bottom: 2.5rem; border-top: 4px solid #2563EB;">
+    <div class="card-header" style="flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem;">
+      <div>
+        <div class="badge" style="background: #EFF6FF; color: #1E40AF; margin-bottom: 0.35rem;">POST-HARVEST LOGISTICS CONTROL</div>
+        <h2 style="font-size: 1.45rem; margin: 0; color: #1E3A8A;">Harvest Lifecycle Management</h2>
+        <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: var(--text-secondary);">
+          Admin-controlled packaging, cold storage, transportation, and delivery stages. Farmers cannot alter these stages.
+        </p>
+      </div>
+      <span class="badge badge-neutral">{{ batches|length }} Batches in Lifecycle</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>UHVC Code</th>
+            <th>Crop Name</th>
+            <th>Grower</th>
+            <th>Quality Status</th>
+            <th>Current Journey Stage</th>
+            <th>Advance Post-Harvest Stage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in batches %}
+            <tr>
+              <td>
+                <strong style="font-family: monospace; color: var(--dark-green);">#{{ b.batch_code }}</strong>
+              </td>
+              <td><strong>{{ b.crop_name }}</strong></td>
+              <td>{{ b.farmer.full_name }}</td>
+              <td>
+                {% if b.is_independently_verified %}
+                  <span class="badge badge-success">🛡️ Verified</span>
+                {% else %}
+                  <span class="badge badge-warning">⏳ {{ b.verification_stage }}</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="badge {% if b.journey_stage == 'Delivered' %}badge-success{% elif b.journey_stage in ['In Transit', 'Packaging'] %}badge-info{% else %}badge-neutral{% endif %}" style="font-size: 0.82rem; font-weight: 700;">
+                  🚚 {{ b.journey_stage }}
+                </span>
+                {% if b.packaging_date %}
+                  <div style="font-size: 0.72rem; color: var(--text-muted);">Packed: {{ b.packaging_date.strftime('%d %b') }}</div>
+                {% endif %}
+                {% if b.dispatch_date %}
+                  <div style="font-size: 0.72rem; color: var(--text-muted);">Dispatched: {{ b.dispatch_date.strftime('%d %b') }}</div>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{{ url_for('admin.update_lifecycle_stage', id=b.id) }}" style="display: flex; gap: 0.4rem; align-items: center;">
+                  <select name="journey_stage" class="form-select" style="font-size: 0.8rem; padding: 0.3rem 0.5rem; width: auto;">
+                    <option value="Harvested" {% if b.journey_stage == 'Harvested' %}selected{% endif %}>1. Harvested</option>
+                    <option value="Quality Check" {% if b.journey_stage == 'Quality Check' %}selected{% endif %}>2. Quality Check</option>
+                    <option value="Packaging" {% if b.journey_stage == 'Packaging' %}selected{% endif %}>3. Packaging</option>
+                    <option value="In Transit" {% if b.journey_stage == 'In Transit' %}selected{% endif %}>4. In Transit</option>
+                    <option value="Delivered" {% if b.journey_stage == 'Delivered' %}selected{% endif %}>5. Delivered</option>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-primary" style="padding: 0.3rem 0.6rem; font-size: 0.78rem;">Update Stage</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- User Management Table -->
+  <div class="card" id="user-account-management">
+    <div class="card-header">
+      <h3 class="card-title">User Accounts & Roles</h3>
+      <span class="badge badge-neutral">{{ users|length }} Registered</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Username</th>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Current Role</th>
+            <th>Location</th>
+            <th>Change Role</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users %}
+            <tr>
+              <td><strong>{{ u.username }}</strong></td>
+              <td>{{ u.full_name }}</td>
+              <td>{{ u.email }}</td>
+              <td><span class="badge badge-success">{{ u.role }}</span></td>
+              <td>{{ u.location or 'N/A' }}</td>
+              <td>
+                <form method="POST" action="{{ url_for('admin.change_user_role', id=u.id) }}" style="display: flex; gap: 0.35rem;">
+                  <select name="role" class="form-select" style="font-size: 0.8rem; padding: 0.25rem 0.5rem; width: auto;">
+                    <option value="FARMER" {% if u.role == 'FARMER' %}selected{% endif %}>FARMER</option>
+                    <option value="BUYER" {% if u.role == 'BUYER' %}selected{% endif %}>BUYER</option>
+                    <option value="ADMIN" {% if u.role == 'ADMIN' %}selected{% endif %}>ADMIN</option>
+                  </select>
+                  <button type="submit" class="btn btn-sm btn-outline">Save</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

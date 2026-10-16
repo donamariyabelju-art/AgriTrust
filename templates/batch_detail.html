@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Passport #{{ batch.batch_code }} — AgriTrust Origin & Quality{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 820px; margin-top: 2rem; margin-bottom: 3rem;">
+  
+  <div class="card" style="padding: 2.5rem; border: 2px solid {% if batch.is_verified %}var(--primary-green){% elif batch.verification_stage == 'Rejected' %}#DC2626{% else %}#F59E0B{% endif %}; box-shadow: var(--shadow-lg);">
+    
+    <!-- Top Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <div class="brand-logo" style="margin-bottom: 0.5rem;">
+          <span class="logo-icon">🌱</span>
+          <span>AgriTrust Traceability Passport</span>
+        </div>
+        <h1 style="font-size: 1.85rem; color: var(--dark-green); margin-bottom: 0.25rem;">
+          Batch #{{ batch.batch_code }}
+        </h1>
+        
+        <!-- Distinct Quality Verification Stage Badge -->
+        <div style="margin-top: 0.35rem;">
+          {% if batch.verification_stage == 'Quality Verified' %}
+            <span class="badge badge-success" style="font-size: 0.88rem; padding: 0.35rem 0.85rem;">
+              🛡️ Quality Verified
+            </span>
+          {% elif batch.verification_stage == 'Rejected' %}
+            <span class="badge badge-danger" style="font-size: 0.88rem; padding: 0.35rem 0.85rem;">
+              ❌ Quality Rejected
+            </span>
+          {% else %}
+            <span class="badge badge-warning" style="font-size: 0.88rem; padding: 0.35rem 0.85rem; background: #FEF3C7; color: #92400E;">
+              ⏳ Pending Quality Review ({{ batch.verification_stage }})
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Scannable QR Code and Seal Box -->
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        {% if qr_data_uri %}
+          <div style="text-align: center;">
+            <img src="{{ qr_data_uri }}" alt="Verification QR Code" style="width: 80px; height: 80px; border-radius: 6px; border: 1px solid var(--border-color);">
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.2rem;">Scannable QR</div>
+          </div>
+        {% endif %}
+
+        <div style="text-align: center; background: {% if batch.is_verified %}var(--pale-green){% elif batch.verification_stage == 'Rejected' %}#FEE2E2{% else %}#FEF3C7{% endif %}; border: 2px solid {% if batch.is_verified %}var(--primary-green){% elif batch.verification_stage == 'Rejected' %}#DC2626{% else %}#F59E0B{% endif %}; border-radius: var(--radius-md); padding: 0.85rem 1.25rem;">
+          <span style="font-size: 1.5rem; display: block;">{% if batch.is_verified %}🛡️{% elif batch.verification_stage == 'Rejected' %}❌{% else %}⏳{% endif %}</span>
+          <strong style="color: {% if batch.is_verified %}var(--dark-green){% elif batch.verification_stage == 'Rejected' %}#991B1B{% else %}#92400E{% endif %}; font-size: 0.85rem; display: block;">
+            {% if batch.is_verified %}AUTHENTIC ORIGIN{% elif batch.verification_stage == 'Rejected' %}DECLINED{% else %}UNVERIFIED LOT{% endif %}
+          </strong>
+          <div style="font-size: 0.75rem; color: var(--text-secondary);">
+            {% if batch.is_verified %}Score: {{ batch.quality_score }}/100{% else %}Stage: {{ batch.verification_stage }}{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality Status vs Farmer Identity Distinction Notice -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; font-size: 0.85rem;">
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
+        <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">FARMER IDENTITY STATUS</span>
+        <strong>✓ Verified Producer Account</strong>
+        <div style="color: var(--text-muted); font-size: 0.78rem;">AgriTrust registered agricultural producer</div>
+      </div>
+      <div style="background: {% if batch.is_verified %}#F0FDF4{% else %}#FFFBEB{% endif %}; border: 1px solid {% if batch.is_verified %}#BBF7D0{% else %}#FDE68A{% endif %}; padding: 0.75rem 1rem; border-radius: var(--radius-sm);">
+        <span style="color: var(--text-muted); display: block; font-size: 0.75rem;">BATCH QUALITY VERIFICATION</span>
+        <strong>
+          {% if batch.is_verified %}
+            <span style="color: #166534;">🛡️ Quality Verified & Audited</span>
+          {% elif batch.verification_stage == 'Rejected' %}
+            <span style="color: #991B1B;">❌ Verification Declined</span>
+          {% else %}
+            <span style="color: #92400E;">⏳ Pending Review (Not Verified)</span>
+          {% endif %}
+        </strong>
+        <div style="color: var(--text-muted); font-size: 0.78rem;">
+          {% if batch.is_verified %}Pesticide & quality audit certified{% else %}Awaiting administrator evaluation{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Product Origin Details (Publicly Approved Information Only) -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; font-size: 0.92rem; line-height: 1.8; margin-bottom: 1.75rem; background: #FAFDF9; padding: 1.25rem; border-radius: var(--radius-md);">
+      <div>
+        <div>🌱 <strong>Crop Variety:</strong> {{ batch.crop_name }}</div>
+        <div>🏷️ <strong>Category:</strong> {{ batch.category }}</div>
+        <div>👨‍🌾 <strong>Grower:</strong> {{ batch.farmer.full_name }}</div>
+        <div>🏡 <strong>Origin Farm:</strong> {{ batch.farm.name if batch.farm else 'Registered Family Farm' }}</div>
+        <div>📍 <strong>Regional Location:</strong> {{ batch.location or (batch.farm.location if batch.farm else 'Nashik, Maharashtra') }}</div>
+      </div>
+      <div>
+        <div>📅 <strong>Harvest Date:</strong> {{ batch.harvest_date.strftime('%d %B %Y') }}</div>
+        <div>⚖️ <strong>Batch Quantity:</strong> {{ batch.quantity }} {{ batch.unit }}</div>
+        <div>🏷️ <strong>Quality Grade:</strong> {{ batch.quality_grade }}</div>
+        <div>🚚 <strong>Current Journey Stage:</strong> <span class="badge badge-info">{{ batch.journey_stage }}</span></div>
+        {% if batch.is_verified %}
+          <div>🛡️ <strong>Inspector:</strong> {{ batch.verifier_name or 'AgriTrust Quality Inspector' }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Stepper Timeline -->
+    <div style="margin: 2rem 0; padding: 1.5rem; background: #F8FAF8; border-radius: var(--radius-md);">
+      <h3 style="font-size: 1.05rem; margin-bottom: 1rem; color: var(--dark-green);">Audited Product Lifecycle</h3>
+      <div class="journey-stepper" style="margin: 1rem 0;">
+        <div class="step-node completed"><div class="step-icon">1</div><div class="step-label">Farm Origin</div></div>
+        <div class="step-node completed"><div class="step-icon">2</div><div class="step-label">Harvested</div></div>
+        <div class="step-node {% if batch.is_verified %}completed{% else %}active{% endif %}">
+          <div class="step-icon">3</div>
+          <div class="step-label">Verification</div>
+        </div>
+        <div class="step-node {% if batch.journey_stage in ['Quality Check', 'Packaging', 'In Transit', 'Delivered'] %}completed{% elif batch.is_verified %}active{% endif %}">
+          <div class="step-icon">4</div>
+          <div class="step-label">Quality</div>
+        </div>
+        <div class="step-node {% if batch.journey_stage in ['Packaging', 'In Transit', 'Delivered'] %}completed{% endif %}">
+          <div class="step-icon">5</div>
+          <div class="step-label">Packaged</div>
+        </div>
+        <div class="step-node {% if batch.journey_stage == 'Delivered' %}completed{% endif %}">
+          <div class="step-icon">6</div>
+          <div class="step-label">Delivered</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Public Agronomic Notes -->
+    {% if batch.notes %}
+      <div style="font-size: 0.9rem; color: var(--text-secondary); background: #FAFDF9; padding: 1rem; border-radius: var(--radius-md); border-left: 4px solid var(--primary-green); margin-bottom: 1.5rem;">
+        <strong>Agronomic Audit Observations:</strong><br>
+        {{ batch.notes }}
+      </div>
+    {% endif %}
+
+    <!-- Privacy & Security Guarantee -->
+    <div style="border-top: 1px solid var(--border-color); padding-top: 1.25rem; font-size: 0.8rem; color: var(--text-muted); text-align: center; line-height: 1.6;">
+      🛡️ <strong>AgriTrust Trust Protocol:</strong> This passport publishes strictly approved provenance and verification results. Producer contact details, private certificates, and confidential admin inspection logs remain protected.
+    </div>
+
+  </div>
+</div>
+{% endblock %}

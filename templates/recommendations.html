@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}What Should I Grow? — AgriTrust Crop Recommendations{% endblock %}
+
+{% block content %}
+<div class="content-container">
+  
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">Agronomic Decision Support</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">What Should I Grow?</h1>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 1rem;">
+      Select your land parameters, soil classification, season, and irrigation capacity. Our transparent agronomy engine calculates optimal crop compatibility, expected yields, production expenses, and estimated profits.
+    </p>
+  </div>
+
+  <!-- Parameter Form -->
+  <div class="card" style="margin-bottom: 2.5rem; background: #FAFDF9; border: 1px solid #D1E7DD;">
+    <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem; color: var(--dark-green);">
+      🌾 Your Agricultural Field Parameters
+    </h3>
+    
+    <form method="POST" action="{{ url_for('recommendations.recommendations_view') }}">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem;">
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="locInput">Farm Location / Region</label>
+          <input type="text" id="locInput" name="location" class="form-control" value="{{ form_data.location }}" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="landSize">Land Size (in Acres)</label>
+          <input type="number" step="0.1" id="landSize" name="land_size" class="form-control" value="{{ form_data.land_size }}" required>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="soilType">Soil Classification</label>
+          <select id="soilType" name="soil_type" class="form-select">
+            <option value="Loamy" {% if form_data.soil_type == 'Loamy' %}selected{% endif %}>Loamy Soil</option>
+            <option value="Black" {% if form_data.soil_type == 'Black' %}selected{% endif %}>Black Soil (Regur)</option>
+            <option value="Alluvial" {% if form_data.soil_type == 'Alluvial' %}selected{% endif %}>Alluvial Soil</option>
+            <option value="Red" {% if form_data.soil_type == 'Red' %}selected{% endif %}>Red Soil</option>
+            <option value="Clay" {% if form_data.soil_type == 'Clay' %}selected{% endif %}>Clayey Soil</option>
+            <option value="Sandy" {% if form_data.soil_type == 'Sandy' %}selected{% endif %}>Sandy Loam</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="seasonSelect">Growing Season</label>
+          <select id="seasonSelect" name="season" class="form-select">
+            <option value="Kharif" {% if form_data.season == 'Kharif' %}selected{% endif %}>Kharif (Monsoon/Autumn)</option>
+            <option value="Rabi" {% if form_data.season == 'Rabi' %}selected{% endif %}>Rabi (Winter/Spring)</option>
+            <option value="Zaid" {% if form_data.season == 'Zaid' %}selected{% endif %}>Zaid (Summer)</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="waterSelect">Water Availability</label>
+          <select id="waterSelect" name="water_availability" class="form-select">
+            <option value="Irrigated" {% if form_data.water_availability == 'Irrigated' %}selected{% endif %}>Perennial / Drip Irrigated</option>
+            <option value="Moderate" {% if form_data.water_availability == 'Moderate' %}selected{% endif %}>Moderate (Borewell/Well)</option>
+            <option value="Low" {% if form_data.water_availability == 'Low' %}selected{% endif %}>Rainfed / Low Water</option>
+          </select>
+        </div>
+
+      </div>
+
+      <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+        <button type="submit" class="btn btn-primary" style="padding: 0.7rem 1.75rem;">
+          Generate Suitability Analysis
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Transparent Engine Notice per Prompt Instructions -->
+  <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 0.85rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: #1E40AF;">
+    <span style="font-size: 1.25rem;">ℹ️</span>
+    <div>
+      <strong>Algorithmic Transparency:</strong> Recommendations are calculated using AgriTrust's transparent agricultural rule-based agronomy model based on regional soil chemistry, water requirements, and dated reference mandi market prices.
+    </div>
+  </div>
+
+  <!-- Results Section -->
+  <h2 style="font-size: 1.6rem; margin-bottom: 1.5rem; color: var(--dark-green);">
+    Ranked Crop Recommendations for {{ form_data.land_size }} Acre(s)
+  </h2>
+
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    {% for rec in recommendations %}
+      <div class="card" style="border-left: 5px solid {% if rec.suitability_score >= 80 %}#2E7D32{% elif rec.suitability_score >= 70 %}#F59E0B{% else %}#9CA3AF{% endif %};">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+              <h3 style="font-size: 1.4rem; color: var(--dark-green);">{{ rec.crop_name }}</h3>
+              <span class="badge {% if rec.suitability_score >= 80 %}badge-success{% else %}badge-warning{% endif %}">
+                {{ rec.suitability_score }}% Match
+              </span>
+            </div>
+            <p style="font-size: 0.92rem; color: var(--text-secondary);">
+              {{ rec.explanation }}
+            </p>
+          </div>
+
+          <div style="text-align: right; background: var(--pale-green); padding: 0.75rem 1.25rem; border-radius: var(--radius-md);">
+            <div style="font-size: 0.8rem; color: var(--text-muted);">Est. Net Profit</div>
+            <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary-green); font-family: 'Outfit';">
+              +₹{{ "{:,.0f}".format(rec.net_profit) }}
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">ROI: ~{{ rec.roi_percentage }}%</div>
+          </div>
+        </div>
+
+        <!-- 4-Grid Metrics -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; background: #F8FAF8; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; font-size: 0.88rem;">
+          <div>
+            <span style="color: var(--text-muted); display: block;">Duration</span>
+            <strong>⏱️ {{ rec.duration }}</strong>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); display: block;">Est. Total Yield</span>
+            <strong>⚖️ {{ "{:,.0f}".format(rec.estimated_yield) }} {{ rec.unit }}</strong>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); display: block;">Ref. Market Price</span>
+            <strong>🏷️ ₹{{ rec.market_price_ref }}/kg</strong>
+          </div>
+          <div>
+            <span style="color: var(--text-muted); display: block;">Est. Production Cost</span>
+            <strong>💸 ₹{{ "{:,.0f}".format(rec.production_cost) }}</strong>
+          </div>
+        </div>
+
+        <!-- Agronomy Guidance -->
+        <div style="font-size: 0.88rem; color: var(--dark-green); background: #FAFBF9; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
+          <strong>💡 Agronomic Management Guidance:</strong> {{ rec.agronomy_guidance }}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

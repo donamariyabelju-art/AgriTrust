@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Log In — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 480px; margin-top: 3rem; margin-bottom: 3rem;">
+  <div class="card" style="padding: 2.25rem;">
+    <div style="text-align: center; margin-bottom: 1.75rem;">
+      <div class="brand-logo" style="justify-content: center; margin-bottom: 0.5rem;">
+        <span class="logo-icon">🌱</span>
+        <span>AgriTrust</span>
+      </div>
+      <h2 style="font-size: 1.5rem; margin-bottom: 0.35rem;">Welcome Back</h2>
+      <p style="font-size: 0.88rem; color: var(--text-muted);">Access your smart farming dashboard or marketplace account</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
+      <div class="form-group">
+        <label class="form-label" for="login_input">Username or Email</label>
+        <input type="text" id="login_input" name="login_input" class="form-control" placeholder="farmer1 or farmer@agritrust.com" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+        Log In to AgriTrust
+      </button>
+    </form>
+
+    <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color); font-size: 0.85rem; text-align: center; color: var(--text-muted);">
+      Don't have an account yet? <a href="{{ url_for('auth.register') }}" style="font-weight: 600;">Register free</a>
+    </div>
+
+    <!-- Quick Demo Logins Box -->
+    <div style="margin-top: 1.25rem; background: var(--pale-green); border-radius: 8px; padding: 0.85rem; font-size: 0.8rem; color: var(--dark-green);">
+      <strong>Demo Accounts:</strong><br>
+      • Farmer: <code>farmer1</code> / <code>Farmer@123</code><br>
+      • Buyer: <code>buyer1</code> / <code>Buyer@123</code><br>
+      • Admin: <code>admin</code> / <code>Admin@123</code>
+    </div>
+  </div>
+</div>
+{% endblock %}

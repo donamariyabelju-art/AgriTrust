@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container" style="text-align: center; padding: 4rem 1.5rem;">
+  <span style="font-size: 4rem;">⚙️</span>
+  <h1 style="font-size: 2.5rem; color: var(--danger); margin: 1rem 0 0.5rem;">500 - System Alert</h1>
+  <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 1.5rem; font-size: 1rem;">
+    An internal server exception occurred while processing this agronomic or market request.
+  </p>
+  <a href="{{ url_for('index') }}" class="btn btn-primary">Return to Homepage</a>
+</div>
+{% endblock %}

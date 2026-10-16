@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Smart Farming Guide — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">Beginner-Friendly Field Handbook</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Smart Farming Guide</h1>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 1rem;">
+      Practical, step-by-step agricultural manuals designed for smallholder and commercial growers. Master the complete lifecycle from soil testing to direct marketplace sale.
+    </p>
+  </div>
+
+  <!-- Crop Switcher Tabs -->
+  <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap;">
+    {% for crop_name in crops_available %}
+      <a href="{{ url_for('general.farming_guide_view', crop=crop_name) }}" class="btn {% if crop_name == selected_crop %}btn-primary{% else %}btn-outline{% endif %}" style="padding: 0.6rem 1.25rem;">
+        {% if crop_name == 'Tomato' %}🍅{% elif crop_name == 'Rice' %}🌾{% elif crop_name == 'Banana' %}🍌{% else %}🥒{% endif %}
+        {{ crop_name }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Crop Overview Banner -->
+  <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #FAFDF9, #F0FDF4); border: 1px solid #BBF7D0;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h2 style="font-size: 1.75rem; color: var(--dark-green); margin-bottom: 0.35rem;">
+          {{ selected_crop }} Cultivation Handbook
+        </h2>
+        <p style="font-size: 0.95rem; color: var(--text-muted); font-style: italic;">
+          Botanical: {{ guide.botanical_name }}
+        </p>
+      </div>
+      <div style="display: flex; gap: 1.5rem; font-size: 0.88rem; color: var(--text-secondary);">
+        <div><strong>Season:</strong> {{ guide.season }}</div>
+        <div><strong>Optimal Temp:</strong> {{ guide.optimal_temp }}</div>
+        <div><strong>Soil:</strong> {{ guide.soil }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11 Standard Steps Layout -->
+  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    {% for step in guide.steps %}
+      <div class="card" style="display: flex; gap: 1.5rem; align-items: flex-start; padding: 1.5rem;">
+        <div style="width: 48px; height: 48px; border-radius: 50%; background: var(--pale-green); color: var(--primary-green); display: flex; align-items: center; justify-content: center; font-size: 1.25rem; font-weight: 800; font-family: 'Outfit'; flex-shrink: 0; box-shadow: 0 2px 6px rgba(46, 125, 50, 0.15);">
+          {{ step.num }}
+        </div>
+        <div style="flex: 1;">
+          <h3 style="font-size: 1.2rem; color: var(--dark-green); margin-bottom: 0.4rem;">
+            Step {{ step.num }}: {{ step.title }}
+          </h3>
+          <p style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.6;">
+            {{ step.desc }}
+          </p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+
+</div>
+{% endblock %}

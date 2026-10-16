@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.title }} — AgriTrust Direct Marketplace{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Breadcrumb -->
+  <div style="margin-bottom: 1.5rem; font-size: 0.88rem; color: var(--text-muted);">
+    <a href="{{ url_for('marketplace.marketplace_view') }}">Marketplace</a> &rsaquo; 
+    <span>{{ product.category }}</span> &rsaquo; 
+    <span style="color: var(--text-primary); font-weight: 600;">{{ product.title }}</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 2.5rem; align-items: start; margin-bottom: 3rem;">
+    
+    <!-- Left: Product Image & Farmer Information -->
+    <div>
+      <div class="card" style="padding: 0; overflow: hidden; margin-bottom: 1.5rem;">
+        <img src="{{ product.image_url or 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=800&q=80' }}" alt="{{ product.title }}" style="width: 100%; height: 380px; object-fit: cover;">
+      </div>
+
+      <!-- Farmer Trust Card -->
+      <div class="card" style="background: #FAFDF9; border: 1px solid #D1E7DD;">
+        <div class="card-header" style="margin-bottom: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--pale-green); color: var(--primary-green); display: flex; align-items: center; justify-content: center; font-weight: 700;">
+              {{ farmer.full_name[:1] }}
+            </div>
+            <div>
+              <h4 style="font-size: 1.05rem; margin-bottom: 0.1rem;">
+                <a href="{{ url_for('dashboard.farmer_profile', user_id=farmer.id) }}">{{ farmer.full_name }}</a>
+              </h4>
+              <small style="color: var(--text-muted);">📍 {{ farmer.location or 'Regional Producer' }}</small>
+            </div>
+          </div>
+          <span class="badge badge-success">Verified Producer</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; text-align: center; font-size: 0.85rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-color);">
+          <div>
+            <div style="font-weight: 700; color: var(--dark-green); font-size: 1.1rem;">{{ trust.completed_orders }}</div>
+            <div style="color: var(--text-muted); font-size: 0.78rem;">Orders Delivered</div>
+          </div>
+          <div>
+            <div style="font-weight: 700; color: var(--dark-green); font-size: 1.1rem;">{{ trust.verified_batches }}</div>
+            <div style="color: var(--text-muted); font-size: 0.78rem;">Audited Batches</div>
+          </div>
+          <div>
+            <div style="font-weight: 700; color: var(--dark-green); font-size: 1.1rem;">★ {{ trust.avg_rating }}</div>
+            <div style="color: var(--text-muted); font-size: 0.78rem;">Buyer Rating</div>
+          </div>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.5;">
+          {{ farmer.bio or 'Dedicated to sustainable agronomy, verified harvesting, and direct buyer transparency.' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Right: Product Pricing & Direct Order Placement -->
+    <div>
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div class="badge badge-success">DIRECT FROM FARMER</div>
+          {% if batch_code %}
+            <span class="badge badge-neutral" style="font-family: monospace; font-size: 0.82rem;">
+              Batch: #{{ batch_code }}
+            </span>
+          {% endif %}
+        </div>
+        
+        <h1 style="font-size: 1.85rem; margin-bottom: 0.5rem; color: var(--dark-green);">
+          {{ product.title }}
+        </h1>
+
+        <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 1.25rem;">
+          <span style="font-size: 2.2rem; font-weight: 800; color: var(--primary-green); font-family: 'Outfit';">
+            ₹{{ product.price_per_unit }}
+          </span>
+          <span style="color: var(--text-muted); font-size: 1rem;">per {{ product.unit }}</span>
+          {% if product.is_quality_verified %}
+            <span class="badge badge-neutral" style="margin-left: 0.5rem;">{{ product.quality_grade }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Separate Quality Verification Status Box -->
+        {% if product.is_quality_verified %}
+          <div style="background: #F0FDF4; border: 1px solid #86EFAC; border-radius: var(--radius-md); padding: 0.9rem 1.1rem; margin-bottom: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+                <span class="badge badge-success" style="font-size: 0.8rem;">🛡️ Quality Verified</span>
+                <span style="font-size: 0.85rem; font-weight: 700; color: #166534;">Grade: {{ product.batch.quality_grade if product.batch else product.quality_grade }} (Score: {{ product.batch.quality_score if product.batch else 90 }}/100)</span>
+              </div>
+              <p style="font-size: 0.82rem; color: #15803D; margin: 0; line-height: 1.4;">
+                Origin & pesticide assay verified by <strong>{{ product.batch.verifier_name if product.batch else 'AgriTrust Certified Quality Inspector' }}</strong>.
+              </p>
+            </div>
+            {% if qr_data_uri %}
+              <div style="text-align: center; flex-shrink: 0;">
+                <a href="{{ url_for('traceability.batch_detail', batch_code=batch_code) }}" title="Inspect QR Traceability Passport">
+                  <img src="{{ qr_data_uri }}" alt="Traceability QR" style="width: 58px; height: 58px; border-radius: 4px; border: 1px solid #BBF7D0;">
+                </a>
+                <div style="font-size: 0.68rem; color: #15803D; font-weight: 600;">Scan QR</div>
+              </div>
+            {% endif %}
+          </div>
+        {% elif product.verification_stage == 'Rejected' %}
+          <div style="background: #FFF1F2; border: 1px solid #FECDD3; border-radius: var(--radius-md); padding: 0.9rem 1.1rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+              <span class="badge badge-danger" style="font-size: 0.8rem;">❌ Quality Rejected</span>
+              <strong style="color: #9F1239; font-size: 0.88rem;">Verification Declined</strong>
+            </div>
+            <p style="font-size: 0.82rem; color: #9F1239; margin: 0; line-height: 1.4;">
+              This produce batch did not meet platform quality standards. Direct purchases are disabled.
+            </p>
+          </div>
+        {% else %}
+          <div style="background: #FEF3C7; border: 1px solid #FCD34D; border-radius: var(--radius-md); padding: 0.9rem 1.1rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;">
+              <span class="badge badge-warning" style="font-size: 0.8rem; background: #FDE68A; color: #92400E;">
+                ⏳ Pending Quality Review
+              </span>
+              <span style="font-size: 0.82rem; font-weight: 600; color: #92400E;">Stage: {{ product.verification_stage }}</span>
+            </div>
+            <p style="font-size: 0.82rem; color: #92400E; margin: 0; line-height: 1.4;">
+              This listing is queued for administrative quality inspection. <em>Not yet certified.</em>
+            </p>
+          </div>
+        {% endif %}
+
+        <div style="background: #F8FAF8; border-radius: var(--radius-md); padding: 1rem; font-size: 0.9rem; line-height: 1.7; margin-bottom: 1.5rem;">
+          <div>📍 <strong>Farm Gate Location:</strong> {{ product.location }}</div>
+          <div>⚖️ <strong>Stock Remaining:</strong> <strong>{{ product.quantity }} {{ product.unit }}</strong></div>
+          <div>📅 <strong>Fresh Harvest Date:</strong> {{ product.harvest_date.strftime('%d %b %Y') }}</div>
+          <div>🛡️ <strong>Quality Grade:</strong> {{ product.quality_grade }}</div>
+          {% if batch_code %}
+            <div>
+              🔍 <strong>Traceability Passport:</strong> 
+              <a href="{{ url_for('traceability.batch_detail', batch_code=batch_code) }}" style="color: var(--primary-green); font-weight: 600; text-decoration: underline;">
+                View Public Audit Certificate &rarr;
+              </a>
+            </div>
+          {% endif %}
+        </div>
+
+        {% if product.description %}
+          <div style="margin-bottom: 1.5rem; font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6;">
+            <strong>Produce Details:</strong>
+            <p>{{ product.description }}</p>
+          </div>
+        {% endif %}
+
+        <!-- Direct Purchase Order Form (Enabled ONLY if Quality Verified) -->
+        {% if product.is_quality_verified %}
+          {% if product.availability_status == 'Available' and product.quantity > 0 %}
+            <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+              <h3 style="font-size: 1.15rem; margin-bottom: 1rem; color: var(--dark-green);">
+                Place Direct Purchase Order
+              </h3>
+
+              {% if session.get('role') == 'BUYER' %}
+                <form method="POST" action="{{ url_for('orders.create_order') }}" id="orderForm">
+                  <input type="hidden" name="product_id" value="{{ product.id }}">
+                  
+                  <div class="form-group">
+                    <label class="form-label" for="orderQty">Purchase Quantity (in {{ product.unit }}) *</label>
+                    <input type="number" step="any" min="0.1" max="{{ product.quantity }}" id="orderQty" name="quantity" class="form-control" value="{{ [10, product.quantity]|min if product.quantity >= 1 else product.quantity }}" required>
+                    <small class="form-help">Max available stock: {{ product.quantity }} {{ product.unit }}</small>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="orderAddress">Delivery / Procurement Address *</label>
+                    <textarea id="orderAddress" name="delivery_address" class="form-control" rows="2" placeholder="Enter delivery terminal or storefront address..." required></textarea>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="orderPhone">Contact Phone Number *</label>
+                    <input type="text" id="orderPhone" name="contact_phone" class="form-control" placeholder="+91 98765 43210" required>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" for="orderNotes">Special Instructions</label>
+                    <input type="text" id="orderNotes" name="notes" class="form-control" placeholder="Packaging preference, delivery hours...">
+                  </div>
+
+                  <!-- Order Total Summary -->
+                  <div style="background: var(--pale-green); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-weight: 600; color: var(--dark-green);">Total Estimated Cost:</span>
+                    <span style="font-size: 1.35rem; font-weight: 800; color: var(--primary-green); font-family: 'Outfit';" id="totalPriceDisplay">
+                      ₹{{ (product.price_per_unit * ([10, product.quantity]|min if product.quantity >= 1 else product.quantity))|round(2) }}
+                    </span>
+                  </div>
+
+                  <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; font-size: 0.8rem; color: #1E40AF; margin-bottom: 1rem;">
+                    <strong>Payment Notice:</strong> Orders use verified Pay-on-Delivery or Direct Demo Settlement. No fake payment gateways are executed.
+                  </div>
+
+                  <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem;">
+                    Confirm Purchase Order
+                  </button>
+                </form>
+              {% elif session.get('user_id') %}
+                <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 1.25rem; border-radius: var(--radius-md); text-align: center;">
+                  <p style="font-size: 0.95rem; color: var(--dark-green); font-weight: 600; margin-bottom: 0.35rem;">
+                    Registered as {{ session.get('role')|capitalize }}
+                  </p>
+                  <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0 0 1rem 0;">
+                    Commercial direct procurement is reserved for Buyer accounts. Sign in with a Buyer account to place purchase orders.
+                  </p>
+                  <a href="{{ url_for('auth.logout') }}" class="btn btn-outline btn-sm">Switch Account</a>
+                </div>
+              {% else %}
+                <div style="text-align: center; padding: 1.5rem; background: var(--bg-color); border-radius: var(--radius-md);">
+                  <p style="font-size: 0.95rem; margin-bottom: 1rem;">Please log in as a Buyer to place direct orders with this farmer.</p>
+                  <a href="{{ url_for('auth.login', next=request.url) }}" class="btn btn-primary btn-sm">Log In to Order</a>
+                </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <div style="background: var(--danger-light); color: var(--danger); padding: 1rem; border-radius: var(--radius-md); text-align: center; font-weight: 600;">
+              This produce lot is currently Sold Out or Reserved.
+            </div>
+          {% endif %}
+        {% else %}
+          <!-- Unverified / Under Review Block: Orders Prohibited -->
+          <div style="border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+            <div style="background: #F8FAFC; border: 1px dashed #CBD5E1; padding: 1.5rem; border-radius: var(--radius-md); text-align: center;">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔒</div>
+              <h4 style="font-size: 1.05rem; color: var(--dark-green); margin-bottom: 0.35rem;">
+                Purchasing Disabled Pending Admin Quality Approval
+              </h4>
+              <p style="font-size: 0.88rem; color: var(--text-secondary); max-width: 440px; margin: 0 auto; line-height: 1.5;">
+                AgriTrust safeguards buyers by allowing direct purchases only after the harvest batch is officially <strong>Quality Verified</strong> by an authorized inspector.
+              </p>
+            </div>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const qtyInput = document.getElementById('orderQty');
+  const priceDisplay = document.getElementById('totalPriceDisplay');
+  const unitPrice = {{ product.price_per_unit }};
+
+  if (qtyInput && priceDisplay) {
+    qtyInput.addEventListener('input', () => {
+      const q = parseFloat(qtyInput.value) || 0;
+      priceDisplay.textContent = '₹' + (q * unitPrice).toFixed(2);
+    });
+  }
+</script>
+{% endblock %}

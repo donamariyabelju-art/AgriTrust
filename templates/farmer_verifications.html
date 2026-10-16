@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}My Product Verification — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div class="badge badge-success" style="margin-bottom: 0.5rem;">QUALITY AUDIT & ORIGIN ASSURANCE</div>
+      <h1 style="font-size: 2.2rem; margin-bottom: 0.35rem;">My Product Verification</h1>
+      <p style="color: var(--text-secondary); max-width: 780px; font-size: 0.95rem;">
+        Track the inspection status and verification lifecycle of your harvest batches. Submit required clarifications, review inspector observations, and view audited certificates.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('marketplace.create_product') }}" class="btn btn-primary">+ Register New Batch</a>
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="btn btn-outline">&larr; Back to Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Stage Counters & Filter Tabs -->
+  <div class="card" style="margin-bottom: 2rem; padding: 1.25rem;">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center;">
+      <span style="font-weight: 600; color: var(--text-muted); font-size: 0.85rem; margin-right: 0.5rem;">FILTER BY STAGE:</span>
+      
+      <a href="{{ url_for('dashboard.my_verifications') }}" 
+         class="btn btn-sm {% if current_stage_filter == 'All' %}btn-primary{% else %}btn-outline{% endif %}" 
+         style="border-radius: 20px; font-size: 0.82rem;">
+        All Batches ({{ batches|length if current_stage_filter == 'All' else (stage_counts.values()|sum) }})
+      </a>
+
+      {% for stage in valid_stages %}
+        {% set cfg = stage_config[stage] %}
+        <a href="{{ url_for('dashboard.my_verifications', stage=stage) }}" 
+           class="btn btn-sm {% if current_stage_filter == stage %}btn-primary{% else %}btn-outline{% endif %}" 
+           style="border-radius: 20px; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.35rem;">
+          <span>{{ cfg.icon }}</span>
+          <span>{{ stage }}</span>
+          <span style="background: rgba(0,0,0,0.08); padding: 0.1rem 0.45rem; border-radius: 10px; font-size: 0.75rem;">
+            {{ stage_counts.get(stage, 0) }}
+          </span>
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Batches Listing -->
+  {% if batches %}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      {% for b in batches %}
+        {% set cfg = stage_config[b.verification_stage] %}
+        <div class="card" style="border-left: 5px solid {{ cfg.color }}; box-shadow: var(--shadow-sm);">
+          
+          <!-- Card Header -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+                <h2 style="font-size: 1.35rem; margin: 0; color: var(--dark-green);">{{ b.crop_name }}</h2>
+                <span class="badge badge-neutral" style="font-family: monospace; font-size: 0.82rem; letter-spacing: 0.5px;">
+                  #{{ b.batch_code }}
+                </span>
+                <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 0.78rem;">
+                  {{ b.category }}
+                </span>
+              </div>
+              <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 1rem; flex-wrap: wrap;">
+                <span>📅 Registered: <strong>{{ b.created_at.strftime('%d %b %Y, %I:%M %p') }}</strong></span>
+                <span>🔄 Last Updated: <strong>{{ (b.updated_at or b.created_at).strftime('%d %b %Y, %I:%M %p') }}</strong></span>
+              </div>
+            </div>
+
+            <!-- Current Stage Badge -->
+            <div style="text-align: right;">
+              <div style="display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.9rem; border-radius: 20px; font-weight: 700; font-size: 0.9rem; background: {{ cfg.bg }}; color: {{ cfg.color }};">
+                <span>{{ cfg.icon }}</span>
+                <span>{{ b.verification_stage }}</span>
+              </div>
+              {% if b.is_independently_verified %}
+                <div style="font-size: 0.78rem; color: var(--primary-green); margin-top: 0.3rem; font-weight: 600;">
+                  ★ Audited Score: {{ b.quality_score }}/100 ({{ b.quality_grade }})
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Specifications Grid -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; background: #FAFDF9; padding: 1rem; border-radius: var(--radius-md); font-size: 0.88rem; margin-bottom: 1.25rem;">
+            <div>
+              <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">QUANTITY</span>
+              <strong>{{ b.quantity }} {{ b.unit }}</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">HARVEST DATE</span>
+              <strong>{{ b.harvest_date.strftime('%d %b %Y') }}</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">ASKING PRICE</span>
+              <strong>{% if b.asking_price %}₹{{ b.asking_price }} / {{ b.unit }}{% else %}Not Listed{% endif %}</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">ORIGIN LOCATION</span>
+              <strong>{{ b.location or (b.farm.location if b.farm else user.location or 'Registered Farm') }}</strong>
+            </div>
+            <div>
+              <span style="color: var(--text-muted); font-size: 0.78rem; display: block;">SUPPORTING DOCS</span>
+              {% if b.document_url %}
+                <a href="{{ b.document_url }}" target="_blank" style="color: var(--primary-green); font-weight: 600; text-decoration: underline;">
+                  📄 {{ b.document_name or 'View Certificate' }}
+                </a>
+              {% else %}
+                <span style="color: var(--text-muted); font-style: italic;">None uploaded</span>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Action Callout Box (What does the farmer need to do?) -->
+          <div style="padding: 1rem 1.25rem; border-radius: var(--radius-md); margin-bottom: 1.25rem; {% if b.verification_stage == 'Action Required' %}background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B;{% elif b.verification_stage == 'Quality Verified' %}background: #F0FDF4; border: 1px solid #86EFAC; color: #166534;{% elif b.verification_stage == 'Rejected' %}background: #FFF1F2; border: 1px solid #FECDD3; color: #9F1239;{% else %}background: #F8FAFC; border: 1px solid #E2E8F0; color: #334155;{% endif %}">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+              <div>
+                <strong style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.92rem; margin-bottom: 0.25rem;">
+                  <span>{{ cfg.icon }}</span>
+                  <span>Action Required / Status Notice</span>
+                </strong>
+                <p style="margin: 0; font-size: 0.88rem; line-height: 1.5;">
+                  {% if b.verification_stage == 'Action Required' %}
+                    <strong>Inspector Feedback:</strong> "{{ b.admin_feedback }}"
+                    <br>Please submit the requested corrections or upload clarifying evidence to proceed.
+                  {% elif b.verification_stage == 'Quality Verified' %}
+                    Your batch is fully verified and audited! Verified origin passport is active and public orders are enabled.
+                    {% if b.verifier_name %}<br><small style="color: var(--text-muted);">Audited by: {{ b.verifier_name }} on {{ b.verification_date.strftime('%d %b %Y') if b.verification_date else 'Recent' }}</small>{% endif %}
+                  {% elif b.verification_stage == 'Rejected' %}
+                    <strong>Administrative Review Reason:</strong> "{{ b.admin_feedback or b.review_reason or 'Batch did not meet platform quality standards.' }}"
+                  {% elif b.verification_stage == 'Under Review' %}
+                    An AgriTrust quality inspector is currently auditing your lot details, field origins, and chemical residue compliance.
+                  {% else %}
+                    Batch is in the queue for admin inspection. You may edit permitted specifications before review commences.
+                  {% endif %}
+                </p>
+              </div>
+
+              <!-- Action buttons for this state -->
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                {% if b.verification_stage == 'Action Required' %}
+                  <button type="button" class="btn btn-sm btn-danger" onclick="openCorrectionModal('{{ b.id }}', '{{ b.batch_code }}', '{{ b.crop_name|e }}', this.getAttribute('data-feedback'))" data-feedback="{{ b.admin_feedback or '' }}" style="white-space: nowrap;">
+                    ✏️ Submit Corrections
+                  </button>
+                {% endif %}
+                <button type="button" class="btn btn-sm btn-outline" onclick="openEditBatchModal('{{ b.id }}', '{{ b.batch_code }}', '{{ b.crop_name|e }}', '{{ b.category }}', '{{ b.quantity }}', '{{ b.unit }}', '{{ b.harvest_date.strftime('%Y-%m-%d') }}', '{{ b.location or '' }}', '{{ b.asking_price or 0 }}', '{{ b.quality_grade }}', this.getAttribute('data-desc'))" data-desc="{{ b.description or '' }}" style="white-space: nowrap;">
+                  📝 Edit Details
+                </button>
+                <a href="{{ url_for('traceability.batch_detail', batch_code=b.batch_code) }}" class="btn btn-sm btn-outline" style="white-space: nowrap;">
+                  🔍 Public View
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chronological Progress Timeline (Audit History) -->
+          <div style="background: #FFFFFF; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h4 style="font-size: 0.95rem; margin: 0; color: var(--dark-green); display: flex; align-items: center; gap: 0.4rem;">
+                <span>⏱️</span>
+                <span>Chronological Verification Timeline</span>
+              </h4>
+              <small style="color: var(--text-muted);">{{ b.verification_history|length }} Event(s) Recorded</small>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.85rem; position: relative; padding-left: 1.5rem; border-left: 2px solid #E2E8F0; margin-left: 0.5rem;">
+              {% for h in b.verification_history %}
+                <div style="position: relative;">
+                  <!-- Timeline Dot -->
+                  <div style="position: absolute; left: -1.95rem; top: 0.2rem; width: 12px; height: 12px; border-radius: 50%; background: {% if h.new_stage == 'Quality Verified' %}var(--primary-green){% elif h.new_stage == 'Action Required' %}#DC2626{% elif h.new_stage == 'Rejected' %}#991B1B{% else %}#3B82F6{% endif %}; border: 2px solid white; box-shadow: 0 0 0 2px #CBD5E1;"></div>
+                  
+                  <div style="font-size: 0.82rem; color: var(--text-muted); display: flex; gap: 0.5rem; align-items: center;">
+                    <strong>{{ h.created_at.strftime('%d %b %Y, %I:%M %p') }}</strong>
+                    <span>&bull;</span>
+                    <span class="badge" style="background: #F1F5F9; color: #475569; font-size: 0.72rem;">{{ h.action_type }}</span>
+                  </div>
+
+                  <div style="font-size: 0.88rem; font-weight: 600; color: var(--dark-green); margin: 0.15rem 0;">
+                    {% if h.previous_stage %}
+                      {{ h.previous_stage }} &rarr; <span style="color: {% if h.new_stage == 'Quality Verified' %}var(--primary-green){% elif h.new_stage == 'Action Required' %}#DC2626{% else %}#1E3A1E{% endif %};">{{ h.new_stage }}</span>
+                    {% else %}
+                      Stage Initialized: {{ h.new_stage }}
+                    {% endif %}
+                  </div>
+
+                  {% if h.comments %}
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); background: #F8FAFC; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); margin-top: 0.25rem;">
+                      {{ h.comments }}
+                    </div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">🛡️</div>
+      <h3 style="font-size: 1.35rem; margin-bottom: 0.5rem; color: var(--dark-green);">No Harvest Batches Found</h3>
+      <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 1.5rem; font-size: 0.95rem;">
+        {% if current_stage_filter != 'All' %}
+          You have no product batches currently in the '{{ current_stage_filter }}' stage.
+        {% else %}
+          Register your harvest batch or marketplace produce listing to automatically receive a Unique Harvest Verification Code (UHVC) and initiate admin quality inspection.
+        {% endif %}
+      </p>
+      <a href="{{ url_for('marketplace.create_product') }}" class="btn btn-primary">+ List Fresh Produce / Batch</a>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- Modal: Submit Corrections & Additional Evidence -->
+<div class="modal-overlay" id="correctionModal" style="display: none;">
+  <div class="modal-card" style="max-width: 550px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.25rem; margin: 0; color: var(--dark-green);" id="corrModalTitle">Submit Corrections</h3>
+      <button onclick="closeModal('correctionModal')" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+    </div>
+
+    <div style="background: #FEF2F2; border: 1px solid #FCA5A5; padding: 0.85rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; font-size: 0.85rem; color: #991B1B;">
+      <strong>Inspector Feedback:</strong>
+      <div id="corrModalFeedback" style="margin-top: 0.25rem;"></div>
+    </div>
+
+    <form method="POST" id="corrForm" action="" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label" for="corrNotes">Clarifications / Corrections Description *</label>
+        <textarea id="corrNotes" name="corrections_note" class="form-control" rows="3" placeholder="Explain the corrections made or answer the inspector's query..." required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="corrDoc">Supporting Document / Revised Certificate (Optional)</label>
+        <input type="file" id="corrDoc" name="supporting_document" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx">
+        <small class="form-help">Upload soil test, pesticide assay, lab report, or organic certificate.</small>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" onclick="closeModal('correctionModal')" class="btn btn-outline">Cancel</button>
+        <button type="submit" class="btn btn-danger">Submit for Re-Review</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Edit Batch Specifications -->
+<div class="modal-overlay" id="editBatchModal" style="display: none;">
+  <div class="modal-card" style="max-width: 600px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+      <h3 style="font-size: 1.25rem; margin: 0; color: var(--dark-green);" id="editModalTitle">Edit Batch Specifications</h3>
+      <button onclick="closeModal('editBatchModal')" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+    </div>
+
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; padding: 0.85rem; border-radius: var(--radius-sm); margin-bottom: 1.25rem; font-size: 0.85rem; color: #1E40AF;">
+      <strong>⚠️ Quality Audit Notice:</strong> Modifying verified specifications or replacing evidence invalidates previous approval and automatically queues the batch for admin re-evaluation. The UHVC code cannot be changed.
+    </div>
+
+    <form method="POST" id="editBatchForm" action="" enctype="multipart/form-data">
+      <div class="form-group">
+        <label class="form-label" for="editCropName">Produce / Crop Name *</label>
+        <input type="text" id="editCropName" name="crop_name" class="form-control" required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="editCategory">Category</label>
+          <select id="editCategory" name="category" class="form-select">
+            <option value="Vegetables">Vegetables</option>
+            <option value="Grains">Grains</option>
+            <option value="Fruits">Fruits</option>
+            <option value="Pulses">Pulses</option>
+            <option value="Spices">Spices</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editHarvestDate">Harvest Date *</label>
+          <input type="date" id="editHarvestDate" name="harvest_date" class="form-control" required>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+        <div class="form-group">
+          <label class="form-label" for="editQty">Quantity *</label>
+          <input type="number" step="0.1" id="editQty" name="quantity" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editUnit">Unit</label>
+          <select id="editUnit" name="unit" class="form-select">
+            <option value="kg">kg</option>
+            <option value="quintal">quintal</option>
+            <option value="crate">crate</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editPrice">Asking Price (₹)</label>
+          <input type="number" step="0.5" id="editPrice" name="asking_price" class="form-control">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="editLocation">Origin Location / APMC *</label>
+        <input type="text" id="editLocation" name="location" class="form-control" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="editGrade">Quality Grade</label>
+        <select id="editGrade" name="quality_grade" class="form-select">
+          <option value="Grade A">Grade A</option>
+          <option value="Grade B">Grade B</option>
+          <option value="Certified Organic">Certified Organic</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="editDesc">Description & Quality Notes</label>
+        <textarea id="editDesc" name="description" class="form-control" rows="2"></textarea>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="editImg">Update Photo</label>
+          <input type="file" id="editImg" name="product_image" class="form-control" accept=".png,.jpg,.jpeg,.webp">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editDoc">Update Document</label>
+          <input type="file" id="editDoc" name="supporting_document" class="form-control" accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" onclick="closeModal('editBatchModal')" class="btn btn-outline">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes & Request Re-Review</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function openCorrectionModal(batchId, batchCode, cropName, feedback) {
+    document.getElementById('corrModalTitle').textContent = 'Submit Corrections: #' + batchCode + ' (' + cropName + ')';
+    document.getElementById('corrModalFeedback').textContent = feedback || 'Please review inspector queries and attach requested documentation.';
+    document.getElementById('corrForm').action = '/farmer/batches/' + batchId + '/submit-corrections';
+    openModal('correctionModal');
+  }
+
+  function openEditBatchModal(batchId, batchCode, cropName, category, qty, unit, harvestDate, location, price, grade, desc) {
+    document.getElementById('editModalTitle').textContent = 'Edit Specifications: #' + batchCode;
+    document.getElementById('editCropName').value = cropName;
+    document.getElementById('editCategory').value = category;
+    document.getElementById('editQty').value = qty;
+    document.getElementById('editUnit').value = unit;
+    document.getElementById('editHarvestDate').value = harvestDate;
+    document.getElementById('editLocation').value = location;
+    document.getElementById('editPrice').value = price;
+    document.getElementById('editGrade').value = grade;
+    document.getElementById('editDesc').value = desc;
+    document.getElementById('editBatchForm').action = '/farmer/batches/' + batchId + '/edit';
+    openModal('editBatchModal');
+  }
+</script>
+{% endblock %}

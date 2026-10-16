@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTrust — Grow Smarter. Sell Fairer. Build Trust.{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section style="background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%); color: white; padding: 4.5rem 1.5rem; text-align: center; position: relative;">
+  <div style="max-width: 900px; margin: 0 auto;">
+    <div class="badge" style="background: rgba(255, 255, 255, 0.15); color: #E8F5E9; margin-bottom: 1.25rem; padding: 0.35rem 1rem;">
+      Direct Farmer-to-Buyer Ecosystem & Decision Intelligence
+    </div>
+    <h1 style="color: white; font-size: 3.2rem; font-weight: 800; margin-bottom: 1.25rem; letter-spacing: -1px; line-height: 1.15;">
+      Grow Smarter. Sell Fairer. Build Trust.
+    </h1>
+    <p style="font-size: 1.2rem; color: #E8F5E9; line-height: 1.6; margin-bottom: 2.25rem; font-weight: 400;">
+      AgriTrust empowers farmers to make informed farming decisions, identify crop health issues, understand market demand, and sell directly to buyers through a transparent agricultural marketplace.
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+      <a href="{{ url_for('auth.register') }}" class="btn btn-primary" style="background: #81C784; color: #1B5E20; font-weight: 700; padding: 0.8rem 1.75rem;">
+        Join as Farmer
+      </a>
+      <a href="{{ url_for('marketplace.marketplace_view') }}" class="btn btn-secondary" style="background: transparent; color: white; border-color: white; padding: 0.8rem 1.75rem;">
+        Explore Marketplace
+      </a>
+      <a href="{{ url_for('general.farming_guide_view') }}" class="btn btn-outline" style="background: rgba(255,255,255,0.1); color: white; border-color: rgba(255,255,255,0.3); padding: 0.8rem 1.75rem;">
+        Learn Farming
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="content-container">
+
+  <!-- 1. Agricultural Challenges Section -->
+  <section style="margin-bottom: 4rem;">
+    <div style="text-align: center; max-width: 700px; margin: 0 auto 2.5rem;">
+      <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">Real Challenges Faced by Farmers Today</h2>
+      <p style="color: var(--text-secondary);">Traditional agricultural supply chains leave producers vulnerable to price crashes and avoidable crop losses.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem;">
+      <div class="card" style="border-left: 4px solid var(--danger);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📉</div>
+        <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Unfair Intermediary Margins</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary);">Multiple layers of middlemen take up to 40-50% of the produce value while farmers struggle to recover basic cultivation input costs.</p>
+      </div>
+      <div class="card" style="border-left: 4px solid var(--warning);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🍂</div>
+        <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Undetected Crop Diseases</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary);">Late identification of fungal and bacterial blight destroys entire plots before remediation can be applied.</p>
+      </div>
+      <div class="card" style="border-left: 4px solid var(--info);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📦</div>
+        <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Distress Sales & Food Spoilage</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary);">Without advance harvest buyers, perishable vegetables spoil at farm gates, forcing distress sales at devastatingly low prices.</p>
+      </div>
+      <div class="card" style="border-left: 4px solid var(--primary-green);">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem;">❓</div>
+        <h3 style="font-size: 1.15rem; margin-bottom: 0.5rem;">Information Asymmetry</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary);">Growers often plant without knowing prevailing wholesale demand, leading to localized oversupply and zero pricing leverage.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. Smart Farming Decision Support -->
+  <section style="margin-bottom: 4rem; background: var(--white); border-radius: var(--radius-lg); padding: 2.5rem; border: 1px solid var(--border-color);">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: center;">
+      <div>
+        <div class="badge badge-success" style="margin-bottom: 0.75rem;">Precision Agronomy</div>
+        <h2 style="font-size: 2.2rem; margin-bottom: 1rem;">Smart Decision Support at Every Step</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 1rem;">
+          From seed bed preparation to harvest timing, AgriTrust provides practical, data-backed guidance tailored to your soil, available irrigation, and seasonal climate.
+        </p>
+        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+          <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem;">
+            <span style="color: var(--primary-green); font-weight: 700;">✓</span>
+            <span>Soil-specific recommendations for Alluvial, Black, Loamy, and Clay soils</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem;">
+            <span style="color: var(--primary-green); font-weight: 700;">✓</span>
+            <span>Comprehensive 11-step farming manuals for high-value staple crops</span>
+          </li>
+          <li style="display: flex; align-items: center; gap: 0.75rem; font-size: 0.95rem;">
+            <span style="color: var(--primary-green); font-weight: 700;">✓</span>
+            <span>Integrated meteorological advisory for preventive pesticide and irrigation timing</span>
+          </li>
+        </ul>
+        <a href="{{ url_for('general.farming_guide_view') }}" class="btn btn-primary">Browse Beginner Guides</a>
+      </div>
+      <div style="background: var(--pale-green); border-radius: var(--radius-lg); padding: 2rem; border: 1px dashed var(--light-green); text-align: center;">
+        <span style="font-size: 4rem;">🌾</span>
+        <h3 style="font-size: 1.3rem; margin: 1rem 0 0.5rem; color: var(--dark-green);">Crop Planning with Economic Projections</h3>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+          Input your land size and season to receive transparent calculations of estimated yield, cultivation expenses, and projected net returns.
+        </p>
+        <a href="{{ url_for('recommendations.recommendations_view') }}" class="btn btn-secondary">What Should I Grow?</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. AI Crop Health Scanner Feature -->
+  <section style="margin-bottom: 4rem;">
+    <div style="background: linear-gradient(135deg, #1B5E20, #2E7D32); border-radius: var(--radius-lg); padding: 3rem; color: white;">
+      <div style="max-width: 750px;">
+        <div class="badge" style="background: rgba(255,255,255,0.2); color: white; margin-bottom: 0.75rem;">
+          Computer Vision + AI Diagnostic Integration
+        </div>
+        <h2 style="color: white; font-size: 2.2rem; margin-bottom: 1rem;">Early Crop Health Scanner</h2>
+        <p style="font-size: 1.05rem; color: #E8F5E9; line-height: 1.6; margin-bottom: 1.75rem;">
+          Upload leaf photographs to validate plant vitality using OpenCV image preprocessing and TensorFlow/Keras diagnostic models. Receive actionable organic and conventional remediation steps within seconds.
+        </p>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <a href="{{ url_for('disease.crop_health_view') }}" class="btn btn-primary" style="background: white; color: var(--dark-green);">
+            Scan a Crop Leaf Now
+          </a>
+          <a href="{{ url_for('chatbot.chatbot_view') }}" class="btn btn-secondary" style="background: transparent; color: white; border-color: white;">
+            Ask AI Assistant
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Direct Marketplace & Harvest Reservations -->
+  <section style="margin-bottom: 4rem;">
+    <div style="text-align: center; max-width: 700px; margin: 0 auto 2.5rem;">
+      <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">Direct From Farmer Marketplace</h2>
+      <p style="color: var(--text-secondary);">Direct connections between farm gates and wholesale retailers, restaurants, and consumer cooperatives.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <div class="card">
+        <div class="badge badge-success" style="margin-bottom: 0.75rem;">DIRECT FROM FARMER</div>
+        <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">Spot Produce Listings</h3>
+        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+          Browse pesticide-tested, farm-fresh produce lots with verified grading, harvest dates, and transparent per-kg pricing.
+        </p>
+        <a href="{{ url_for('marketplace.marketplace_view') }}" class="btn btn-primary btn-sm">Browse Active Listings</a>
+      </div>
+
+      <div class="card">
+        <div class="badge badge-info" style="margin-bottom: 0.75rem;">ADVANCE BOOKINGS</div>
+        <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">Harvest Reservation System</h3>
+        <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+          Reserve upcoming harvests before they are picked. Farmers secure guaranteed buyers while buyers lock in fresh produce availability.
+        </p>
+        <a href="{{ url_for('reservations.reservations_view') }}" class="btn btn-secondary btn-sm">Explore Future Harvests</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Traceability and Food Waste Prevention -->
+  <section style="margin-bottom: 4rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+      <div class="card" style="background: #FAFCF8;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">🛡️ Origin Traceability & Batches</h3>
+        <p style="font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Every harvest lot receives a registered Batch Code tracking the full journey: Farm → Harvest → Quality Check → Packaging → Delivery.
+        </p>
+        <a href="{{ url_for('traceability.traceability_view') }}" style="font-weight: 600; font-size: 0.9rem;">Trace a Harvest Batch &rarr;</a>
+      </div>
+
+      <div class="card" style="background: #FAFCF8;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">♻️ Food Waste Reduction</h3>
+        <p style="font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Identify perishable crops nearing end of shelf-life with automatic alerts, allowing farmers to apply quick-sale clearance prices before spoilage.
+        </p>
+        <a href="{{ url_for('general.demand_view') }}" style="font-weight: 600; font-size: 0.9rem;">View Community Demands &rarr;</a>
+      </div>
+
+      <div class="card" style="background: #FAFCF8;">
+        <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem;">📊 Fair Price Intelligence</h3>
+        <p style="font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 1rem;">
+          Consult wholesale benchmark reference bands and price trends to set fair farm-gate asking prices with full pricing autonomy.
+        </p>
+        <a href="{{ url_for('general.price_advisor_view') }}" style="font-weight: 600; font-size: 0.9rem;">Open Price Advisor &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. How AgriTrust Works (Step-by-step workflow) -->
+  <section style="margin-bottom: 4rem;">
+    <div style="text-align: center; max-width: 700px; margin: 0 auto 2.5rem;">
+      <h2 style="font-size: 2rem; margin-bottom: 0.75rem;">How AgriTrust Works</h2>
+      <p style="color: var(--text-secondary);">A clear, transparent lifecycle for modern sustainable agriculture.</p>
+    </div>
+    <div class="journey-stepper" style="margin: 2rem 0;">
+      <div class="step-node completed">
+        <div class="step-icon">1</div>
+        <div class="step-label">Plan & Plant</div>
+      </div>
+      <div class="step-node completed">
+        <div class="step-icon">2</div>
+        <div class="step-label">Monitor Health</div>
+      </div>
+      <div class="step-node completed">
+        <div class="step-icon">3</div>
+        <div class="step-label">Lock Orders</div>
+      </div>
+      <div class="step-node completed">
+        <div class="step-icon">4</div>
+        <div class="step-label">Audit Batch</div>
+      </div>
+      <div class="step-node completed">
+        <div class="step-icon">5</div>
+        <div class="step-label">Direct Sale</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

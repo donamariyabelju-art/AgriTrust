@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+
+{% block title %}Direct Marketplace — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <div class="badge badge-success" style="margin-bottom: 0.5rem;">DIRECT FROM FARMER</div>
+      <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Direct Agricultural Marketplace</h1>
+      <p style="color: var(--text-secondary); max-width: 750px; font-size: 0.98rem;">
+        Procure fresh produce directly from verified farmers without intermediary markups. Transparent origin tracking and farm-gate pricing.
+      </p>
+    </div>
+    {% if session.get('role') in ['FARMER', 'ADMIN'] %}
+      <a href="{{ url_for('marketplace.create_product') }}" class="btn btn-primary">+ List Fresh Produce</a>
+    {% endif %}
+  </div>
+
+  <!-- Search and Filter Bar -->
+  <div class="card" style="margin-bottom: 2.5rem; background: #FAFDF9;">
+    <form method="GET" action="{{ url_for('marketplace.marketplace_view') }}">
+      <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 0.85rem; align-items: end;">
+        
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="searchQ">Search Produce</label>
+          <input type="text" id="searchQ" name="q" class="form-control" placeholder="Search tomatoes, basmati rice, bananas..." value="{{ search_query }}">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="catFilter">Category</label>
+          <select id="catFilter" name="category" class="form-select">
+            {% for cat in categories %}
+              <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="locFilter">Location</label>
+          <input type="text" id="locFilter" name="location" class="form-control" placeholder="e.g. Nashik" value="{{ search_location }}">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label" for="priceFilter">Max Price (₹/kg)</label>
+          <input type="number" step="any" min="0" id="priceFilter" name="max_price" class="form-control" placeholder="Max ₹" value="{{ search_max_price }}">
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="height: 42px;">Filter</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Product Listings Grid -->
+  {% if products %}
+    <div class="products-grid">
+      {% for prod in products %}
+        <div class="product-card">
+          <div style="position: relative;">
+            <img src="{{ prod.image_url or 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=600&q=80' }}" alt="{{ prod.title }}" class="product-img">
+            
+            <!-- Batch Code Pill -->
+            {% if prod.uhvc_code %}
+              <span class="badge badge-neutral" style="position: absolute; top: 12px; left: 12px; font-family: monospace; font-size: 0.75rem; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                #{{ prod.uhvc_code }}
+              </span>
+            {% endif %}
+
+            <!-- Distinct Quality Verification Status -->
+            {% if prod.is_quality_verified %}
+              <span class="badge badge-success" style="position: absolute; top: 12px; right: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-weight: 700;">
+                🛡️ Quality Verified
+              </span>
+            {% elif prod.verification_stage == 'Rejected' %}
+              <span class="badge badge-danger" style="position: absolute; top: 12px; right: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-weight: 700;">
+                ❌ Quality Rejected
+              </span>
+            {% else %}
+              <span class="badge" style="position: absolute; top: 12px; right: 12px; background: #FEF3C7; color: #92400E; font-weight: 700; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                ⚠️ Unverified Lot
+              </span>
+            {% endif %}
+
+            <span class="badge badge-neutral" style="position: absolute; bottom: 12px; right: 12px;">
+              {{ prod.quality_grade }}
+            </span>
+          </div>
+
+          <div class="product-body">
+            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
+              <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">
+                {{ prod.category }}
+              </span>
+              <div class="product-price">
+                ₹{{ prod.price_per_unit }}<small style="font-size: 0.8rem; font-weight: 500; color: var(--text-muted);">/{{ prod.unit }}</small>
+              </div>
+            </div>
+
+            <h3 style="font-size: 1.15rem; margin-bottom: 0.35rem;">
+              <a href="{{ url_for('marketplace.product_detail', id=prod.id) }}">{{ prod.title }}</a>
+            </h3>
+
+            <!-- Quality Status Indicator Text -->
+            {% if prod.is_quality_verified %}
+              <div style="font-size: 0.78rem; color: #166534; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.3rem;">
+                <span>✓ Audited: {{ prod.quality_grade }}</span>
+                <span>(Score: {{ prod.batch.quality_score if prod.batch else 90 }}/100)</span>
+              </div>
+            {% else %}
+              <div style="font-size: 0.78rem; color: #92400E; font-weight: 600; margin-bottom: 0.5rem;">
+                ⏳ Verification: {{ prod.verification_stage }} (Checkout locked)
+              </div>
+            {% endif %}
+
+            <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem; flex: 1;">
+              <div>📍 {{ prod.location }}</div>
+              <div>⚖️ Available: <strong>{{ prod.quantity }} {{ prod.unit }}</strong></div>
+              <div>📅 Harvest Date: {{ prod.harvest_date.strftime('%d %b %Y') }}</div>
+              <div>👨‍🌾 Grower: {% if prod.farmer %}<a href="{{ url_for('dashboard.farmer_profile', user_id=prod.farmer.id) }}" style="font-weight: 600;">{{ prod.farmer.full_name }}</a>{% else %}<span>Independent Farmer</span>{% endif %}</div>
+            </div>
+
+            <div style="display: flex; gap: 0.5rem; align-items: center;">
+              <a href="{{ url_for('marketplace.product_detail', id=prod.id) }}" class="btn btn-sm btn-primary" style="flex: 1;">
+                View Details
+              </a>
+              {% if prod.uhvc_code %}
+                <a href="{{ url_for('traceability.batch_detail', batch_code=prod.uhvc_code) }}" class="btn btn-sm btn-outline" title="Trace Batch Certificate">
+                  QR Passport
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card" style="text-align: center; padding: 3rem 1.5rem;">
+      <span style="font-size: 3rem;">📦</span>
+      <h3 style="margin: 1rem 0 0.5rem;">No Produce Listings Match Your Search</h3>
+      <p style="color: var(--text-secondary); max-width: 450px; margin: 0 auto 1.5rem;">
+        Try resetting filters or browse all agricultural categories to discover direct farm produce.
+      </p>
+      <a href="{{ url_for('marketplace.marketplace_view') }}" class="btn btn-outline">Clear All Filters</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

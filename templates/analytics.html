@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}Revenue Analytics — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">FINANCIAL HEALTH & PERFORMANCE</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Revenue Analytics</h1>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.98rem;">
+      Track realized income from direct farmer-to-buyer deliveries, analyze volume distributions, and evaluate crop profitability.
+    </p>
+  </div>
+
+  {% if not has_real_order_history %}
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 0.85rem 1.25rem; margin-bottom: 2rem; font-size: 0.88rem; color: #1E40AF;">
+      <strong>Sample Demonstration Data:</strong> As your farm has not yet completed deliveries, the analytics charts below display baseline regional representative figures. As orders are marked Delivered, this page dynamically charts your actual farm finances.
+    </div>
+  {% endif %}
+
+  <!-- 4-Grid Financial Metric Cards -->
+  <div class="stats-grid" style="margin-bottom: 2.5rem;">
+    <div class="stat-card">
+      <div class="stat-icon green">💰</div>
+      <div class="stat-data">
+        <div class="stat-value">₹{{ "{:,.0f}".format(total_revenue) }}</div>
+        <div class="stat-label">Total Realized Revenue</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue">⚖️</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ "{:,.0f}".format(total_sold_kg) }} kg</div>
+        <div class="stat-label">Total Delivered Quantity</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green">🏷️</div>
+      <div class="stat-data">
+        <div class="stat-value">₹{{ avg_price }}/kg</div>
+        <div class="stat-label">Average Realized Price</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon yellow">🔒</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ "{:,.0f}".format(total_reserved_kg) }} kg</div>
+        <div class="stat-label">Advance Reserved Bookings</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two Charts Grid -->
+  <div class="two-col-grid" style="margin-bottom: 3rem;">
+    
+    <!-- Crop-wise Revenue Breakdown -->
+    <div class="chart-card">
+      <div class="card-header">
+        <h4 class="card-title">Crop-Wise Revenue Contribution (₹)</h4>
+        <span class="badge badge-neutral">By Variety</span>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="cropRevChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Inventory Allocation Breakdown -->
+    <div class="chart-card">
+      <div class="card-header">
+        <h4 class="card-title">Produce Allocation Balance</h4>
+        <span class="badge badge-neutral">Quantity (kg)</span>
+      </div>
+      <div class="chart-wrapper">
+        <canvas id="inventoryChart"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Delivered Orders Audit Log -->
+  <div class="card">
+    <div class="card-header">
+      <h4 class="card-title">Completed Direct Order Deliveries</h4>
+      <span class="badge badge-success">{{ delivered_orders|length }} Completed</span>
+    </div>
+
+    {% if delivered_orders %}
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Order Number</th>
+              <th>Produce</th>
+              <th>Buyer</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Total Revenue</th>
+              <th>Date Delivered</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in delivered_orders %}
+              <tr>
+                <td><strong>#{{ o.order_number }}</strong></td>
+                <td>{{ o.product.title }}</td>
+                <td>{{ o.buyer.full_name }}</td>
+                <td>{{ o.quantity }} {{ o.product.unit }}</td>
+                <td>₹{{ o.unit_price }}/{{ o.product.unit }}</td>
+                <td><strong style="color: var(--primary-green);">₹{{ "{:,.2f}".format(o.total_amount) }}</strong></td>
+                <td>{{ o.updated_at.strftime('%d %b %Y') }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); font-size: 0.9rem; padding: 1rem 0;">
+        No completed deliveries on file yet. Once orders transition to 'Delivered', they will log automatically into your financial audit stream.
+      </p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Crop Revenue Chart
+  const cropCtx = document.getElementById('cropRevChart');
+  if (cropCtx) {
+    new Chart(cropCtx, {
+      type: 'bar',
+      data: {
+        labels: {{ crop_revenue_labels | tojson }},
+        datasets: [{
+          label: 'Revenue (₹)',
+          data: {{ crop_revenue_values | tojson }},
+          backgroundColor: '#2E7D32',
+          borderRadius: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: (val) => '₹' + val.toLocaleString() }
+          }
+        }
+      }
+    });
+  }
+
+  // Inventory Distribution Chart
+  const invCtx = document.getElementById('inventoryChart');
+  if (invCtx) {
+    new Chart(invCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Delivered Sold', 'Unsold In Stock', 'Advance Reserved'],
+        datasets: [{
+          data: [
+            {{ total_sold_kg }},
+            {{ total_unsold_kg if total_unsold_kg > 0 else 500 }},
+            {{ total_reserved_kg if total_reserved_kg > 0 else 300 }}
+          ],
+          backgroundColor: ['#2E7D32', '#F59E0B', '#3B82F6'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+</script>
+{% endblock %}

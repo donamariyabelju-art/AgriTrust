@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block title %}Page Not Found — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container" style="text-align: center; padding: 4rem 1.5rem;">
+  <span style="font-size: 4rem;">🌱</span>
+  <h1 style="font-size: 2.5rem; color: var(--dark-green); margin: 1rem 0 0.5rem;">404 - Page Not Found</h1>
+  <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto 1.5rem; font-size: 1rem;">
+    The agricultural resource or page you requested could not be located.
+  </p>
+  <div style="display: flex; gap: 1rem; justify-content: center;">
+    <a href="{{ url_for('index') }}" class="btn btn-primary">Return Home</a>
+    <a href="{{ url_for('marketplace.marketplace_view') }}" class="btn btn-outline">Go to Marketplace</a>
+  </div>
+</div>
+{% endblock %}

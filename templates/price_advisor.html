@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Fair Price Advisor — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">MARKET INTELLIGENCE & FARM-GATE AUTONOMY</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Fair Price Advisor</h1>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 1rem;">
+      Benchmark reference prices against regional wholesale markets. Calculate your optimal farm-gate asking price to ensure fair margins without broker commissions.
+    </p>
+  </div>
+
+  <!-- Price Guidance Notice per Prompt -->
+  <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 0.85rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: #1E40AF;">
+    <span style="font-size: 1.25rem;">ℹ️</span>
+    <div>
+      <strong>Guidance Disclaimer:</strong> Reference figures reflect dated regional wholesale averages. Estimated values are advisory guidance, not guaranteed sale prices. Farmers maintain 100% autonomy to determine their own farm-gate asking prices.
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 2.5rem; align-items: start; margin-bottom: 3rem;">
+    
+    <!-- Left: Reference Wholesale Standards Table -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Reference Mandi Price Bands (Indicative)</h3>
+        <span class="badge badge-neutral">Regional Averages</span>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Crop Variety</th>
+              <th>Category</th>
+              <th>Min - Max Band</th>
+              <th>Avg Ref</th>
+              <th>Trend</th>
+              <th>Demand</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ref in reference_data %}
+              <tr>
+                <td><strong>{{ ref.crop }}</strong></td>
+                <td><small>{{ ref.category }}</small></td>
+                <td>₹{{ ref.min_price }} - ₹{{ ref.max_price }}/kg</td>
+                <td><strong style="color: var(--dark-green);">₹{{ ref.avg_price }}/kg</strong></td>
+                <td>
+                  <span style="color: {% if '+' in ref.trend %}#16A34A{% elif '-' in ref.trend %}#DC2626{% else %}#6B7280{% endif %}; font-weight: 600;">
+                    {{ ref.trend }}
+                  </span>
+                </td>
+                <td><span class="badge {% if ref.demand == 'High' %}badge-success{% else %}badge-info{% endif %}">{{ ref.demand }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right: Farmer Cost-Plus Asking Price Calculator -->
+    <div class="card" style="background: #FAFDF9; border: 1px solid #D1E7DD;">
+      <h3 style="font-size: 1.25rem; margin-bottom: 0.5rem; color: var(--dark-green);">
+        🧮 Farm-Gate Price Calculator
+      </h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+        Calculate a sustainable price per kg covering your cultivation seeds, drip electricity, fertilizers, labor, and desired profit margin.
+      </p>
+
+      <form id="calcForm" onsubmit="event.preventDefault(); calculatePrice();">
+        <div class="form-group">
+          <label class="form-label" for="calcCost">Total Production Cost (₹)</label>
+          <input type="number" id="calcCost" class="form-control" placeholder="e.g. 25000" value="20000" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="calcYield">Harvest Yield Quantity (kg)</label>
+          <input type="number" id="calcYield" class="form-control" placeholder="e.g. 1500" value="1200" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="calcMargin">Target Profit Margin (%)</label>
+          <input type="number" id="calcMargin" class="form-control" placeholder="e.g. 25" value="25" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;">
+          Calculate Sustainable Asking Price
+        </button>
+      </form>
+
+      <!-- Calculator Result Display -->
+      <div id="calcResults" style="margin-top: 1.5rem; padding: 1.25rem; background: var(--pale-green); border-radius: var(--radius-md); text-align: center;">
+        <div style="font-size: 0.82rem; color: var(--text-muted);">Recommended Farm-Gate Asking Price:</div>
+        <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary-green); font-family: 'Outfit';" id="recPriceDisplay">
+          ₹20.83<small style="font-size: 0.9rem; font-weight: 500;">/kg</small>
+        </div>
+        <div style="font-size: 0.82rem; color: var(--dark-green); margin-top: 0.35rem;" id="breakEvenDisplay">
+          Break-even cost: ₹16.67/kg &bull; Projected Net: ₹5,000
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  function calculatePrice() {
+    const cost = parseFloat(document.getElementById('calcCost').value) || 0;
+    const yld = parseFloat(document.getElementById('calcYield').value) || 1;
+    const margin = parseFloat(document.getElementById('calcMargin').value) || 0;
+
+    if (yld <= 0) return;
+
+    const breakEven = cost / yld;
+    const recPrice = breakEven * (1 + margin / 100);
+    const totalRev = recPrice * yld;
+    const netProfit = totalRev - cost;
+
+    document.getElementById('recPriceDisplay').innerHTML = `₹${recPrice.toFixed(2)}<small style="font-size: 0.9rem; font-weight: 500;">/kg</small>`;
+    document.getElementById('breakEvenDisplay').innerHTML = `Break-even cost: ₹${breakEven.toFixed(2)}/kg &bull; Projected Net: ₹${netProfit.toLocaleString('en-IN', {maximumFractionDigits:0})}`;
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+
+{% block title %}Farmer Dashboard — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+  <div class="dashboard-layout">
+    
+    <!-- Farmer Sidebar -->
+    <aside class="farmer-sidebar">
+      <div class="sidebar-profile">
+        <div class="profile-avatar">
+          {{ user.full_name[:1] }}
+        </div>
+        <h4 style="font-size: 1.1rem; margin-bottom: 0.2rem;">{{ user.full_name }}</h4>
+        <span class="badge badge-success">Verified Farmer</span>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.4rem;">📍 {{ user.location or 'Region Unspecified' }}</p>
+      </div>
+
+      <ul class="sidebar-menu">
+        <li><a href="{{ url_for('dashboard.dashboard_view') }}" class="active"><span class="icon">📊</span> Dashboard</a></li>
+        <li><a href="{{ url_for('farms.farms_view') }}"><span class="icon">🏡</span> My Farms ({{ total_farms }})</a></li>
+        <li><a href="{{ url_for('crops.crops_view') }}"><span class="icon">🌱</span> My Crops ({{ active_crops }})</a></li>
+        <li><a href="{{ url_for('marketplace.create_product') }}"><span class="icon">📦</span> + List Produce</a></li>
+        <li><a href="{{ url_for('dashboard.my_verifications') }}"><span class="icon">🛡️</span> My Product Verification</a></li>
+        <li><a href="{{ url_for('orders.orders_view') }}"><span class="icon">🛍️</span> Received Orders</a></li>
+        <li><a href="{{ url_for('reservations.reservations_view') }}"><span class="icon">📅</span> Harvest Bookings</a></li>
+        <li><a href="{{ url_for('traceability.traceability_view') }}"><span class="icon">🛡️</span> Traceability Batches</a></li>
+        <li><a href="{{ url_for('analytics.analytics_view') }}"><span class="icon">📈</span> Revenue Analytics</a></li>
+        <li><a href="{{ url_for('analytics.waste_reduction_view') }}"><span class="icon">♻️</span> Waste Reduction</a></li>
+        <li><a href="{{ url_for('dashboard.farmer_profile', user_id=user.id) }}"><span class="icon">🌟</span> Public Trust Profile</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Dashboard Area -->
+    <section>
+      
+      <!-- Welcome Header -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 style="font-size: 1.85rem; margin-bottom: 0.25rem;">Farmer Decision Center</h1>
+          <p style="color: var(--text-secondary); font-size: 0.95rem;">Empowering your farm decisions with transparent agronomy and direct marketplace access.</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <a href="{{ url_for('crops.crops_view') }}" class="btn btn-sm btn-secondary">+ Add Crop</a>
+          <a href="{{ url_for('marketplace.create_product') }}" class="btn btn-sm btn-primary">+ List Harvest</a>
+        </div>
+      </div>
+
+      <!-- "What Should I Do Today?" Callout Section -->
+      <div class="action-box">
+        <div class="action-header">
+          <h3>
+            <span>📋</span> What Should I Do Today?
+          </h3>
+          <span class="badge badge-success">Daily Prioritized Actions</span>
+        </div>
+        <div class="task-list">
+          {% for task in today_tasks %}
+            <div class="task-item">
+              <div class="task-content">
+                <h5>{{ task.title }}</h5>
+                <p>{{ task.desc }}</p>
+              </div>
+              <a href="{{ task.action_url }}" class="btn btn-sm {% if task.urgency == 'high' %}btn-danger{% else %}btn-primary{% endif %}">
+                Take Action
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon green">🏡</div>
+          <div class="stat-data">
+            <div class="stat-value">{{ total_farms }}</div>
+            <div class="stat-label">Registered Farms</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon green">🌾</div>
+          <div class="stat-data">
+            <div class="stat-value">{{ active_crops }}</div>
+            <div class="stat-label">Monitored Crops</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon blue">💰</div>
+          <div class="stat-data">
+            <div class="stat-value">₹{{ "{:,.0f}".format(total_revenue) }}</div>
+            <div class="stat-label">Total Revenue</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon yellow">🔒</div>
+          <div class="stat-data">
+            <div class="stat-value">{{ total_reserved_kg }} kg</div>
+            <div class="stat-label">Advance Reserved</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Two-Column Analytics & Live Monitoring Grid -->
+      <div class="two-col-grid">
+        
+        <!-- Revenue Growth Chart -->
+        <div class="chart-card">
+          <div class="card-header">
+            <h4 class="card-title">Monthly Revenue Trend</h4>
+            <span class="badge badge-neutral">Direct Sales (₹)</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="revenueTrendChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Crop Health Breakdown Chart -->
+        <div class="chart-card">
+          <div class="card-header">
+            <h4 class="card-title">Crop Vitality Summary</h4>
+            <a href="{{ url_for('disease.crop_health_view') }}" style="font-size: 0.8rem; font-weight: 600;">Scan Leaf</a>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="cropHealthChart"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Active Crops Quick Glance Table -->
+      <div class="card" style="margin-bottom: 1.75rem;">
+        <div class="card-header">
+          <h4 class="card-title">Active Crop Cycles</h4>
+          <a href="{{ url_for('crops.crops_view') }}" class="btn btn-sm btn-outline">View All Crops</a>
+        </div>
+        
+        {% if crops %}
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Crop Name</th>
+                  <th>Growth Stage</th>
+                  <th>Progress</th>
+                  <th>Expected Harvest</th>
+                  <th>Yield (kg)</th>
+                  <th>Health Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for crop in crops %}
+                  <tr>
+                    <td><strong>{{ crop.crop_name }}</strong></td>
+                    <td>{{ crop.growth_stage }}</td>
+                    <td style="min-width: 140px;">
+                      <div class="progress-bar-container">
+                        <div class="progress-fill" style="width: {{ crop.growth_percentage }}%;"></div>
+                      </div>
+                      <small style="color: var(--text-muted);">{{ crop.growth_percentage }}% Cycle</small>
+                    </td>
+                    <td>{{ crop.expected_harvest_date.strftime('%d %b %Y') }}</td>
+                    <td>{{ crop.expected_yield }} kg</td>
+                    <td>
+                      {% if crop.health_status == 'Healthy' %}
+                        <span class="badge badge-success">{{ crop.health_status }}</span>
+                      {% elif crop.health_status == 'Moderate Risk' %}
+                        <span class="badge badge-warning">{{ crop.health_status }}</span>
+                      {% else %}
+                        <span class="badge badge-danger">{{ crop.health_status }}</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            <p>No crops currently tracked. Add your active plantings to monitor growth and health status.</p>
+            <a href="{{ url_for('crops.crops_view') }}" class="btn btn-sm btn-primary" style="margin-top: 0.75rem;">+ Add First Crop</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Community Demand Highlights -->
+      <div class="card">
+        <div class="card-header">
+          <h4 class="card-title">Active Wholesale Demand In Your Region</h4>
+          <a href="{{ url_for('general.demand_view') }}" class="btn btn-sm btn-outline">Explore Community Demand</a>
+        </div>
+        
+        {% if market_demands %}
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem;">
+            {% for dem in market_demands %}
+              <div style="border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; background: #FAFDF9;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                  <strong style="color: var(--dark-green); font-size: 1.05rem;">{{ dem.crop_name }}</strong>
+                  <span class="badge {% if dem.demand_level == 'Urgent' %}badge-danger{% else %}badge-warning{% endif %}">{{ dem.demand_level }} Demand</span>
+                </div>
+                <div style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5;">
+                  <div>Required: <strong>{{ dem.required_quantity }} {{ dem.unit }}</strong></div>
+                  <div>Offering: <strong>₹{{ dem.target_price or 'Negotiable' }}/kg</strong></div>
+                  <div>Destination: {{ dem.location }}</div>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: var(--text-muted); font-size: 0.9rem;">No active buyer demands posted yet.</p>
+        {% endif %}
+      </div>
+
+    </section>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Monthly Revenue Chart
+  const revCtx = document.getElementById('revenueTrendChart');
+  if (revCtx) {
+    new Chart(revCtx, {
+      type: 'line',
+      data: {
+        labels: {{ monthly_revenue.labels | tojson }},
+        datasets: [{
+          label: 'Direct Sales Revenue (₹)',
+          data: {{ monthly_revenue.revenues | tojson }},
+          borderColor: '#2E7D32',
+          backgroundColor: 'rgba(46, 125, 50, 0.08)',
+          fill: true,
+          tension: 0.35,
+          borderWidth: 2.5,
+          pointBackgroundColor: '#1B5E20',
+          pointRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { callback: (val) => '₹' + val.toLocaleString() }
+          }
+        }
+      }
+    });
+  }
+
+  // Crop Health Distribution Doughnut Chart
+  const healthCtx = document.getElementById('cropHealthChart');
+  if (healthCtx) {
+    new Chart(healthCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Healthy', 'Action Required / At Risk'],
+        datasets: [{
+          data: [{{ healthy_count }}, {{ risk_count }}],
+          backgroundColor: ['#2E7D32', '#EF4444'],
+          borderWidth: 2,
+          borderColor: '#FFFFFF'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  }
+</script>
+{% endblock %}

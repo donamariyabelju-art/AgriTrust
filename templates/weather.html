@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Weather & Crop Advisory — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">Agrometeorology & Field Operations</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Weather & Crop Advisory</h1>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 1rem;">
+      Real-time meteorological monitoring and automated agronomic recommendations for irrigation scheduling, foliar spraying, and harvest operations.
+    </p>
+  </div>
+
+  <!-- Status Notice Banner -->
+  {% if is_live_data %}
+    <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: var(--radius-md); padding: 0.75rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: #166534;">
+      <span>🟢</span>
+      <div>
+        <strong>Live Weather Active:</strong> Connected to OpenWeatherMap API for <strong>{{ weather.location }}</strong>.
+      </div>
+    </div>
+  {% else %}
+    <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 0.85rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; color: #1E40AF;">
+      <span style="font-size: 1.25rem;">ℹ️</span>
+      <div>
+        <strong>Sample Demonstration Weather Data:</strong> Weather API key is not currently configured. Displaying sample regional agrometeorology records for <em>{{ weather.location }}</em>. To enable live satellite meteorological readings, supply <code>WEATHER_API_KEY</code> in your <code>.env</code> file.
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Location Search Bar -->
+  <div class="card" style="margin-bottom: 2rem; padding: 1.25rem;">
+    <form method="GET" action="{{ url_for('weather.weather_view') }}" style="display: flex; gap: 0.75rem;">
+      <input type="text" name="location" class="form-control" placeholder="Search region or district (e.g. Nashik, Pune, Nagpur)..." value="{{ weather.location }}">
+      <button type="submit" class="btn btn-primary" style="white-space: nowrap;">Check Weather</button>
+    </form>
+  </div>
+
+  <!-- Current Weather Card -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; align-items: start;">
+    
+    <div class="card" style="background: linear-gradient(135deg, #1B5E20, #2E7D32); color: white;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem;">
+        <div>
+          <span style="font-size: 0.85rem; color: #D1E7DD; text-transform: uppercase; letter-spacing: 0.5px;">Current Conditions</span>
+          <h2 style="color: white; font-size: 1.85rem; margin-top: 0.2rem;">{{ weather.location }}</h2>
+          <p style="color: #A3CFBB; font-size: 0.95rem;">{{ weather.description }}</p>
+        </div>
+        <div style="font-size: 3.5rem;">
+          {% if 'Rain' in weather.condition %}🌧️{% elif 'Cloud' in weather.condition %}⛅{% elif 'Clear' in weather.condition %}☀️{% else %}🌤️{% endif %}
+        </div>
+      </div>
+
+      <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 1.5rem;">
+        <span style="font-size: 3.5rem; font-weight: 800; font-family: 'Outfit';">{{ weather.temperature }}°C</span>
+        <span style="color: #D1E7DD; font-size: 1rem;">Feels like {{ weather.feels_like }}°C</span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.2); padding-top: 1.25rem; font-size: 0.88rem;">
+        <div>
+          <div style="color: #A3CFBB;">Humidity</div>
+          <strong style="font-size: 1.1rem;">{{ weather.humidity }}%</strong>
+        </div>
+        <div>
+          <div style="color: #A3CFBB;">Wind Speed</div>
+          <strong style="font-size: 1.1rem;">{{ weather.wind_speed }} km/h</strong>
+        </div>
+        <div>
+          <div style="color: #A3CFBB;">Rain Probability</div>
+          <strong style="font-size: 1.1rem;">{{ weather.rain_prob }}%</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Agronomic Advisories Based on Conditions -->
+    <div>
+      <h3 style="font-size: 1.35rem; margin-bottom: 1rem; color: var(--dark-green);">
+        🌾 Field Operational Advisories
+      </h3>
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for adv in advisories %}
+          <div class="card" style="border-left: 4px solid {% if adv.severity == 'warning' %}var(--warning){% elif adv.severity == 'success' %}var(--primary-green){% else %}var(--info){% endif %}; padding: 1.15rem;">
+            <h4 style="font-size: 1.05rem; margin-bottom: 0.35rem; color: var(--dark-green);">
+              {{ adv.title }}
+            </h4>
+            <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.55;">
+              {{ adv.advice }}
+            </p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}

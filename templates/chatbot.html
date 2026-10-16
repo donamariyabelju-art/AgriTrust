@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriTrust AI — Your Farming Assistant{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 900px;">
+
+  <!-- Header -->
+  <div style="margin-bottom: 1.5rem; text-align: center;">
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">Agronomic AI Decision Companion</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">AgriTrust AI — Your Farming Assistant</h1>
+    <p style="color: var(--text-secondary); max-width: 650px; margin: 0 auto; font-size: 0.95rem;">
+      Ask questions regarding crop nutrition, drip scheduling, organic pest controls, market pricing, or marketplace reservations.
+    </p>
+  </div>
+
+  <!-- Transparent Engine Notice -->
+  <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: var(--radius-md); padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-size: 0.82rem; color: #1E40AF; text-align: center;">
+    <strong>Platform Notice:</strong> Powered by AgriTrust's structured agronomy rule engine & decision knowledge base. Advisory responses provide standard agricultural guidance.
+  </div>
+
+  <!-- Chat Container -->
+  <div class="chat-container">
+    
+    <!-- Messages Scroll Area -->
+    <div class="chat-messages" id="chatMessages">
+      
+      <!-- Welcome Message from AgriTrust AI -->
+      <div class="chat-bubble bot">
+        <strong>Hello! I am AgriTrust AI, your dedicated agronomy assistant.</strong><br><br>
+        I can assist you with:
+        <ul style="margin: 0.5rem 0 0.5rem 1.25rem;">
+          <li>Fertilizer management & organic alternatives (NPK ratios)</li>
+          <li>Irrigation and drip scheduling</li>
+          <li>Identifying pest infestations and disease symptoms</li>
+          <li>Harvest timing and selling directly on the AgriTrust Marketplace</li>
+          <li>Harvest advance bookings and fair price guidance</li>
+        </ul>
+        What questions do you have about your farm today?
+      </div>
+
+    </div>
+
+    <!-- Suggested Question Pills -->
+    <div class="prompt-pills">
+      <span style="font-size: 0.78rem; font-weight: 600; color: var(--text-muted); align-self: center;">Suggested:</span>
+      {% for prompt in suggested_prompts %}
+        <button type="button" class="pill-btn">{{ prompt }}</button>
+      {% endfor %}
+    </div>
+
+    <!-- Input Form -->
+    <form class="chat-input-area" id="chatForm">
+      <input type="text" id="chatInput" class="form-control" placeholder="Ask a farming question (e.g. Best fertilizer for tomatoes?)..." autocomplete="off" required>
+      <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem;">
+        Send
+      </button>
+    </form>
+
+  </div>
+
+</div>
+{% endblock %}

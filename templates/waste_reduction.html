@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+
+{% block title %}Waste Reduction Dashboard — AgriTrust{% endblock %}
+
+{% block content %}
+<div class="content-container">
+
+  <!-- Header -->
+  <div style="margin-bottom: 2rem;">
+    <div class="badge badge-success" style="margin-bottom: 0.5rem;">ZERO AGRICULTURAL SPOILAGE</div>
+    <h1 style="font-size: 2.2rem; margin-bottom: 0.5rem;">Food Waste Reduction Dashboard</h1>
+    <p style="color: var(--text-secondary); max-width: 800px; font-size: 0.98rem;">
+      Monitor post-harvest shelf life and unsold produce risks. Trigger quick-sale bulk discounts to restaurants and wholesale processors before spoilage occurs.
+    </p>
+  </div>
+
+  <!-- Metric Overview -->
+  <div class="stats-grid" style="margin-bottom: 2.5rem;">
+    <div class="stat-card">
+      <div class="stat-icon yellow">📦</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ insights.unsold_count }}</div>
+        <div class="stat-label">Active Produce Lots</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green">⚖️</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ "{:,.0f}".format(insights.total_unsold_kg) }} kg</div>
+        <div class="stat-label">Current Unsold Volume</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon red">⚠️</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ insights.high_risk_items|length }}</div>
+        <div class="stat-label">High Shelf-Life Risk Items</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue">🛒</div>
+      <div class="stat-data">
+        <div class="stat-value">{{ insights.moderate_risk_items|length }}</div>
+        <div class="stat-label">Moderate Risk Items</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- High Spoilage Risk Action Alert -->
+  {% if insights.high_risk_items %}
+    <div style="background: #FEF2F2; border: 1px solid #FECACA; border-radius: var(--radius-lg); padding: 1.75rem; margin-bottom: 2.5rem;">
+      <h3 style="color: #991B1B; font-size: 1.3rem; margin-bottom: 0.75rem;">
+        🚨 Urgent Clearance Alerts: High Spoilage Risk
+      </h3>
+      <p style="font-size: 0.92rem; color: #7F1D1D; margin-bottom: 1.25rem;">
+        The following perishable vegetable lots have exceeded standard post-harvest holding intervals. Take immediate action to liquidate inventory.
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for item in insights.high_risk_items %}
+          <div style="background: white; border: 1px solid #FCA5A5; border-radius: var(--radius-md); padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <h4 style="color: var(--dark-green); font-size: 1.1rem; margin-bottom: 0.2rem;">{{ item.product.title }}</h4>
+              <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                <span>Harvested: {{ item.days_since_harvest }} days ago</span> &bull; 
+                <span>Remaining: <strong>{{ item.product.quantity }} {{ item.product.unit }}</strong></span> &bull; 
+                <span>Current Price: ₹{{ item.product.price_per_unit }}/kg</span>
+              </div>
+            </div>
+
+            <!-- Quick Discount Form -->
+            <form method="POST" action="{{ url_for('analytics.apply_discount', id=item.product.id) }}" style="display: flex; gap: 0.5rem; align-items: center;">
+              <select name="discount_pct" class="form-select" style="width: auto; padding: 0.4rem 0.65rem; font-size: 0.85rem;">
+                <option value="15">Apply 15% Quick-Sale Discount</option>
+                <option value="25" selected>Apply 25% Clearance Discount</option>
+                <option value="35">Apply 35% Bulk Clearance Discount</option>
+              </select>
+              <button type="submit" class="btn btn-sm btn-danger">Apply Clearance Price</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <div class="card" style="margin-bottom: 2.5rem; background: #F0FDF4; border: 1px solid #BBF7D0; padding: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+      <span style="font-size: 2rem;">✅</span>
+      <div>
+        <h4 style="color: var(--dark-green); margin-bottom: 0.2rem;">Produce Freshness Optimal</h4>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0;">
+          No high-risk perishable produce lots currently on inventory. All harvested crops are within standard freshness transit windows.
+        </p>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Active Buyer Demands to Match With -->
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">Clearance Opportunity: Direct Wholesale Demand Matching</h3>
+      <a href="{{ url_for('general.demand_view') }}" class="btn btn-sm btn-outline">View Full Demand Board</a>
+    </div>
+    <p style="font-size: 0.92rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      Connect your remaining produce directly with active institutional buyers seeking bulk deliveries.
+    </p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+      <a href="{{ url_for('general.demand_view') }}" class="btn btn-primary btn-sm">Check Active Buyer Tenders</a>
+      <a href="{{ url_for('marketplace.create_product') }}" class="btn btn-secondary btn-sm">List New Fresh Harvest</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

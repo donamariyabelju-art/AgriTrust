@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Environment and secrets
+.env
+instance/
+*.db
+*.sqlite3
+
+# Uploads
+uploads/scans/*
+!uploads/scans/.gitkeep
+uploads/products/*
+!uploads/products/.gitkeep
+
+# Testing and caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Private backups and keys
+config_backup.txt
+*.pem
+*.key

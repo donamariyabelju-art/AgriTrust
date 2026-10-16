@@ -1,0 +1,195 @@
+AgriTrust Project Summary
+
+Project Name: AgriTrust
+Project Type: Smart agriculture decision support and direct farmer-to-buyer marketplace
+Technology: Python, Flask, SQLAlchemy, MySQL/SQLite, OpenCV, NumPy, Pillow, TensorFlow-ready AI, Chart.js
+
+1. Overview
+AgriTrust is a production-style agriculture platform that helps farmers manage farms, track crop growth, analyze soil and crop health, make better agronomic decisions, and sell produce directly to buyers. It reduces dependence on intermediaries, improves farm trust, and supports better crop planning and supply chain visibility.
+
+The system combines decision support, image-based disease assessment, market access, future harvest reservations, and trust-building analytics in one platform.
+
+2. System Architecture
+Client (Browser) -> Flask Web App -> Blueprints/Routes -> SQLAlchemy Models -> MySQL or SQLite Database
+                -> Uploads folder for images
+                -> AI / OpenCV image processing
+                -> Weather and agronomy advisory services
+
+The app is organized into modules for:
+- Authentication
+- Dashboard
+- Farms
+- Crops
+- Recommendations
+- Disease detection
+- Chatbot
+- Weather advisory
+- Marketplace
+- Reservations
+- Orders
+- Analytics
+- Traceability
+- Admin
+
+3. Main Features
+- User authentication with role-based access control for FARMER, BUYER, and ADMIN
+- Farmer dashboard with daily tasks, crop cards, revenue summaries, and charts
+- Farm management with acreage, soil type, irrigation type, and location info
+- Crop lifecycle tracking from planting to harvest readiness
+- Crop recommendation engine based on weather, soil, location, season, acreage, and water availability
+- Crop disease detection using image uploads and OpenCV preprocessing
+- AI monitoring and agronomy guidance for disease conditions and treatment recommendations
+- Smart farming guide for major crops such as tomato, rice, banana, and cucumber
+- AI chatbot assistant for farm and marketplace support
+- Weather advisory integration with OpenWeatherMap-style guidance
+- Direct marketplace with product listings, filters, stock visibility, and buyer orders
+- Future harvest reservation workflow
+- Harvest batch and quality traceability with unique batch IDs
+- Trust profile calculation for farmers based on completed orders, verified batches, and buyer feedback
+- Revenue analytics and waste reduction insights
+- Admin moderation and verification controls
+
+4. Technology Stack
+Backend:
+- Python
+- Flask
+- Flask-SQLAlchemy
+- PyMySQL
+- python-dotenv
+- Werkzeug
+- Jinja2
+- requests
+
+AI and computer vision:
+- OpenCV
+- NumPy
+- Pillow
+- TensorFlow / Keras (optional model integration)
+
+Frontend:
+- HTML5
+- CSS3
+- JavaScript
+- Chart.js
+- Jinja2 templates
+
+Database:
+- MySQL (preferred)
+- SQLite fallback for local / demo use
+
+5. Database and Configuration
+The project uses configuration variables from config.py and optional environment variables through .env.
+Main settings include:
+- SECRET_KEY
+- DB_USER
+- DB_PASSWORD
+- DB_HOST
+- DB_PORT
+- DB_NAME
+- USE_SQLITE_FALLBACK
+- WEATHER_API_KEY
+- AI_API_KEY
+- DISEASE_MODEL_PATH
+
+The app automatically creates upload directories and initializes tables. If MySQL is unavailable, it falls back to an SQLite database automatically.
+
+6. Project Structure
+app.py
+- Creates the Flask app
+- Registers all blueprints
+- Initializes database tables
+- Seeds demo users and sample product data
+
+config.py
+- Database configuration
+- Upload folder configuration
+- Weather and model settings
+
+requirements.txt
+- All required Python packages
+
+README.md
+- Full project description and setup instructions
+
+routes/
+- auth.py
+- dashboard.py
+- farms.py
+- crops.py
+- recommendations.py
+- disease.py
+- chatbot.py
+- weather.py
+- marketplace.py
+- reservations.py
+- orders.py
+- analytics.py
+- traceability.py
+- general.py
+- admin.py
+
+models/
+- user.py
+- farm.py
+- crop.py
+- product.py
+- demand.py
+- order.py
+- reservation.py
+- harvest.py
+- review.py
+- notification.py
+- scan.py
+
+templates/
+- login.html, register.html, dashboard.html, crops.html, farms.html, marketplace.html, recommendations.html, orders.html, reservations.html, traceability.html, analytics.html, admin.html, and more
+
+static/
+- CSS and JavaScript assets for interface behavior and styling
+
+uploads/
+- products/
+- scans/
+
+database/
+- schema.sql
+- seed.sql
+
+ai/
+- crop recommendation and disease handling modules
+
+7. Demo Accounts
+Farmer
+- Username: farmer1
+- Password: Farmer@123
+- Email: farmer@agritrust.com
+
+Buyer
+- Username: buyer1
+- Password: Buyer@123
+- Email: buyer@agritrust.com
+
+Admin
+- Username: admin
+- Password: Admin@123
+- Email: admin@agritrust.com
+
+8. How to Run the App
+1. Open the project folder.
+2. Install the dependencies:
+   pip install -r requirements.txt
+3. Start the app:
+   python app.py
+4. Open in browser:
+   http://localhost:5000
+
+9. Important Notes and Limitations
+- AI and recommendation logic are advisory tools; they should be validated with field testing and extension guidance.
+- Weather and disease detection may rely on optional API keys and model files.
+- Orders are demo-style or pay-on-delivery oriented; they are not production payment transactions.
+- The application is designed as a realistic agricultural platform prototype rather than a fully deployed production system.
+
+10. Summary
+AgriTrust is a complete digital agriculture platform that combines farm management, crop intelligence, disease detection, marketplace commerce, and traceability into one product. It is designed to help farmers grow smarter, sell fairer, and build trust across the agricultural supply chain.
+
+End of document
